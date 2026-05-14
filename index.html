@@ -28,11 +28,10 @@
       max-width: 1200px;
       width: 100%;
       justify-content: center;
-      /* align-items: stretch will be handled by JS, but we keep default */
       align-items: flex-start;
     }
 
-    /* SQUARE PANEL: contains pixel face - canvas fills it completely */
+    /* SQUARE PANEL */
     .face-panel {
       flex: 1;
       min-width: 260px;
@@ -45,7 +44,6 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      transition: all 0.2s;
       overflow: hidden;
     }
 
@@ -82,7 +80,7 @@
       cursor: pointer;
     }
 
-    /* RECTANGLE PANEL: terminal content - height will be synced via JS */
+    /* RECTANGLE PANEL - minimal contact info */
     .terminal-panel {
       flex: 1.5;
       min-width: 280px;
@@ -94,34 +92,44 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;  /* vertically center the sparse content */
+      gap: 1.5rem;
+      overflow: auto;          /* allow scroll if needed, but content is small */
+      word-wrap: break-word;
     }
 
-    .log {
+    .contact-line {
       color: #b8e4a0;
       text-shadow: 0 0 3px #3c8c2a;
-      font-size: 1rem;
-      line-height: 1.55;
-    }
-
-    .line {
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin-bottom: 0.6rem;
-      letter-spacing: 0.5px;
-    }
-
-    .prompt {
-      color: #b8ffa0;
+      font-size: 1.2rem;
+      text-align: center;
       font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .contact-line a {
+      color: #7bc45a;
+      text-decoration: none;
+      border-bottom: 1px dotted #3c7835;
+    }
+
+    .contact-line a:hover {
+      color: #d0ffb0;
+      border-bottom: 1px solid #b8ffa0;
     }
 
     .cursor-line {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 1rem;
+    }
+
+    .prompt {
+      color: #b8ffa0;
+      font-weight: bold;
+      font-size: 1rem;
     }
 
     .cursor {
@@ -138,52 +146,22 @@
       50% { opacity: 0; }
     }
 
-    .link-list {
-      margin: 1.8rem 0 0.5rem;
-      border-top: 1px solid #2f4f2f;
-      padding-top: 1.2rem;
-    }
-
-    .link-list a {
-      color: #7bc45a;
-      text-decoration: none;
-      border-bottom: 1px dotted #3c7835;
-      transition: 0.2s;
-    }
-
-    .link-list a:hover {
-      color: #d0ffb0;
-      border-bottom: 1px solid #b8ffa0;
-      text-shadow: 0 0 3px #4cae3a;
-    }
-
-    hr {
-      border-color: #2b4922;
-      margin: 1rem 0;
-    }
-
-    footer {
-      font-size: 0.7rem;
-      text-align: center;
-      margin-top: 1.8rem;
-      color: #3b6132;
-    }
-
+    /* On mobile, panels stack and no height sync needed */
     @media (max-width: 700px) {
       .dashboard {
         flex-direction: column;
-        gap: 1.5rem;
         align-items: center;
       }
       .face-panel {
-        width: 100%;
         max-width: 320px;
+        width: 100%;
       }
       .terminal-panel {
         width: 100%;
-        padding: 1.2rem;
-        /* on mobile, height auto (no sync) */
-        height: auto !important;
+        padding: 1.5rem;
+      }
+      .contact-line {
+        font-size: 1rem;
       }
     }
   </style>
@@ -194,41 +172,18 @@
     <canvas id="pixelFaceCanvas" width="512" height="512" style="width: 100%; height: 100%;"></canvas>
   </div>
   <div class="terminal-panel crt-effect" id="terminalPanel">
-    <div>
-      <div class="log">
-        <div class="line"><span class="prompt">$ </span>whoami</div>
-        <div class="line">StraySignal — lost transmission // coder, wanderer, void-listener</div>
-        <div class="line"><span class="prompt">$ </span>cat ~/signal.log</div>
-        <div class="line">[2026-05-14] boot: forest_interface_online</div>
-        <div class="line">[2026-05-14] static: faint_horror_echo / appalachian_ridge_present</div>
-        <div class="line">[2026-05-14] subsystem: 3d_render_pool & gh_pages_ready</div>
-        <div class="line"><span class="prompt">$ </span>ls projects/</div>
-        <div class="line">code/   3d-models/   horror-vault/   hollow-campaign/   deep-space_logs/</div>
-      </div>
-      <div class="cursor-line">
-        <span class="prompt">stray@signal:~$</span>
-        <span id="typing-text"></span>
-        <span class="cursor"></span>
-      </div>
+    <div class="contact-line">
+      📡 <a href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
     </div>
-    <div>
-      <div class="link-list">
-        <hr>
-        <div>⟁ PROJECT PORTAL — incoming relays:</div>
-        <div>🔗 <a href="#">GitHub (straysignals)</a> &nbsp;|&nbsp;
-             🔗 <a href="#">3D gallery (workbench)</a> &nbsp;|&nbsp;
-             🔗 <a href="#">SCP-style logs</a> &nbsp;|&nbsp;
-             🔗 <a href="#">Void terminal game</a>
-        </div>
-        <div style="margin-top: 0.6rem;">📡 <a href="mailto:hello@straysignals.dev">hello@straysignals.dev</a> — static only (echo forwarded)</div>
-      </div>
-      <footer>// STRAYSIGNAL.DEV // logged in as: observer // transmission stable</footer>
+    <div class="cursor-line">
+      <span class="prompt">stray@signal:~$</span>
+      <span class="cursor"></span>
     </div>
   </div>
 </div>
 
 <script>
-  // ---- Pixel face drawing (same as before) ----
+  // Pixel face drawing (same as before)
   const canvas = document.getElementById('pixelFaceCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -243,12 +198,14 @@
     }
 
     if (expression === 'neutral') {
+      // eyes
       for (let x = 12; x <= 13; x++) {
         for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
       }
       for (let x = 18; x <= 19; x++) {
         for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
       }
+      // mouth straight line
       for (let i = 12; i <= 19; i++) setPixel(i, 24, '#8bc47a');
     } 
     else if (expression === 'happy') {
@@ -297,42 +254,10 @@
     setTimeout(() => drawPixelFace('neutral'), 1500);
   });
 
-  // ---- Typing animation (unchanged) ----
-  const typingSpan = document.getElementById('typing-text');
-  const fullCommand = 'echo "hello void..." && ls signal_strength';
-  let i = 0;
-  function typeEffect() {
-    if (i < fullCommand.length) {
-      typingSpan.textContent += fullCommand.charAt(i);
-      i++;
-      setTimeout(typeEffect, 60);
-    } else {
-      setTimeout(() => {
-        const cursorLineDiv = document.querySelector('.cursor-line');
-        if (!document.querySelector('.extra-line')) {
-          const extra = document.createElement('div');
-          extra.className = 'line extra-line';
-          extra.style.marginTop = '0.8rem';
-          extra.innerHTML = '<span class="prompt">$ </span>Connection stable // stray signal active';
-          cursorLineDiv.parentNode.insertBefore(extra, cursorLineDiv.nextSibling);
-        }
-      }, 1800);
-    }
-  }
-  setTimeout(typeEffect, 400);
-
-  const dateLine = document.createElement('div');
-  dateLine.className = 'line';
-  dateLine.style.opacity = '0.7';
-  dateLine.style.fontSize = '0.75rem';
-  dateLine.innerHTML = `<span class="prompt"># </span>last_handshake: ${new Date().toLocaleString()} EST`;
-  document.querySelector('.log').appendChild(dateLine);
-
-  // ---- Equal height sync (desktop only) ----
+  // Equal height sync (desktop only)
   function syncHeights() {
     const facePanel = document.querySelector('.face-panel');
     const terminalPanel = document.getElementById('terminalPanel');
-    // Only sync if not in mobile layout (window width > 700px)
     if (window.innerWidth > 700 && facePanel && terminalPanel) {
       const faceHeight = facePanel.offsetHeight;
       if (faceHeight > 0) {
@@ -345,7 +270,6 @@
 
   window.addEventListener('load', syncHeights);
   window.addEventListener('resize', syncHeights);
-  // Also observe changes in case the face panel size changes after fonts load
   if (window.ResizeObserver) {
     const resizeObserver = new ResizeObserver(syncHeights);
     const facePanel = document.querySelector('.face-panel');
