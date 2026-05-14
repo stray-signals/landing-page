@@ -85,7 +85,7 @@
       cursor: pointer;
     }
 
-    /* RECTANGLE PANEL - minimal with just blinking cursor */
+    /* RECTANGLE PANEL - content pushed to bottom left */
     .terminal-panel {
       flex: 1.5;
       min-width: 280px;
@@ -97,9 +97,8 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5rem;
+      justify-content: flex-end;  /* pushes content to bottom */
+      align-items: flex-start;    /* aligns content to left */
     }
 
     .cursor-line {
@@ -107,7 +106,6 @@
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      justify-content: center;
     }
 
     .prompt {
