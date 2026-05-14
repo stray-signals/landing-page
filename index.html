@@ -2,29 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>straysignals.dev :: interactive terminal</title>
   <style>
+    /* Global reset – no page scrolling, only internal scrolling inside terminal */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    html, body {
+      height: 100%;
+      overflow: hidden;          /* prevents page scroll */
+    }
+
     body {
       background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603);
-      min-height: 100vh;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       font-family: 'Courier New', 'Fira Code', monospace;
-      padding: 1.5rem;
+      padding: 1rem;
     }
 
     .dashboard-wrapper {
       max-width: 1200px;
       width: 100%;
-      position: relative;
+      height: auto;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .dashboard {
@@ -85,7 +94,7 @@
       cursor: pointer;
     }
 
-    /* RECTANGLE PANEL */
+    /* TERMINAL PANEL – takes remaining height, scrolls internally */
     .terminal-panel {
       flex: 1.5;
       min-width: 280px;
@@ -94,13 +103,14 @@
       border-radius: 28px;
       padding: 1rem;
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
-      position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      height: 100%;
+      max-height: 70vh;         /* keeps terminal from overflowing on mobile */
+      overflow: hidden;
     }
 
-    /* Scrollable command history */
+    /* Scrollable command history – this is where scrolling happens */
     .command-history {
       flex: 1;
       overflow-y: auto;
@@ -109,7 +119,6 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      max-height: calc(100% - 60px);
     }
 
     .history-entry {
@@ -158,6 +167,7 @@
       padding-top: 0.8rem;
       margin-top: 0.5rem;
       font-family: inherit;
+      flex-shrink: 0;
     }
 
     .input-prompt {
@@ -178,10 +188,9 @@
       position: relative;
       display: inline-flex;
       align-items: center;
-      caret-color: transparent; /* hide default caret */
+      caret-color: transparent;
     }
 
-    /* The editable area */
     .editable-area {
       display: inline;
       white-space: pre;
@@ -192,7 +201,6 @@
       font-size: inherit;
     }
 
-    /* Blinking block cursor (fake caret) */
     .block-cursor {
       display: inline-block;
       width: 0.6em;
@@ -215,6 +223,7 @@
       font-size: 0.8rem;
       color: #3b6132;
       padding-right: 0.5rem;
+      flex-shrink: 0;
     }
 
     .contact-footer a {
@@ -228,27 +237,37 @@
       border-bottom: 1px solid #b8ffa0;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 700px) {
+      body {
+        padding: 0.5rem;
+      }
       .dashboard {
         flex-direction: column;
         align-items: center;
+        gap: 1rem;
       }
       .face-panel {
-        max-width: 320px;
+        max-width: 280px;
         width: 100%;
       }
       .terminal-panel {
+        max-height: 60vh;
         width: 100%;
         padding: 0.8rem;
+      }
+      .input-prompt, .editable-area {
+        font-size: 0.85rem;
       }
       .contact-footer {
         text-align: center;
       }
-      .input-prompt {
-        font-size: 0.85rem;
-      }
-      .editable-area {
-        font-size: 0.85rem;
+    }
+
+    /* Fix for very tall screens: keep terminal from growing too much */
+    @media (min-height: 800px) {
+      .terminal-panel {
+        max-height: 65vh;
       }
     }
   </style>
@@ -276,7 +295,7 @@
 </div>
 
 <script>
-  // ------ Pixel face drawing (unchanged) ------
+  // Pixel face drawing (unchanged)
   const canvas = document.getElementById('pixelFaceCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -345,51 +364,20 @@
     setTimeout(() => drawPixelFace('neutral'), 1500);
   });
 
-  // ------ Terminal logic with contenteditable + block cursor ------
+  // Terminal logic with contenteditable and block cursor
   const historyDiv = document.getElementById('commandHistory');
   const editableSpan = document.getElementById('editableSpan');
   const blockCursor = document.getElementById('blockCursor');
 
-  // Focus management: clicking anywhere on terminal panel focuses the editable area
-  const terminalPanelDiv = document.getElementById('terminalPanel');
-  terminalPanelDiv.addEventListener('click', (e) => {
-    // Don't steal focus if already clicking inside editable area
-    if (e.target !== editableSpan && !editableSpan.contains(e.target)) {
-      editableSpan.focus();
-    }
-  });
-
-  // Ensure the cursor stays at the end when editing
   function placeCaretAtEnd(el) {
     el.focus();
     const range = document.createRange();
     range.selectNodeContents(el);
-    range.collapse(false); // false = to end
+    range.collapse(false);
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
   }
-
-  editableSpan.addEventListener('focus', () => {
-    placeCaretAtEnd(editableSpan);
-    // Show block cursor (it's always visible, but we keep it)
-  });
-
-  // When the user presses Enter, submit the command
-  editableSpan.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const cmd = editableSpan.textContent;
-      if (cmd.trim() !== '') {
-        addMessage('visitor', cmd);
-        processCommand(cmd);
-      }
-      editableSpan.textContent = '';
-      placeCaretAtEnd(editableSpan);
-    } else if (e.key === 'Backspace') {
-      // Allow default behavior
-    }
-  });
 
   function addMessage(sender, text) {
     const entry = document.createElement('div');
@@ -416,21 +404,43 @@
     }
   }
 
-  // Initial focus
+  editableSpan.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const cmd = editableSpan.textContent;
+      if (cmd.trim() !== '') {
+        addMessage('visitor', cmd);
+        processCommand(cmd);
+      }
+      editableSpan.textContent = '';
+      placeCaretAtEnd(editableSpan);
+    }
+  });
+
+  // Focus management: ensure editable area gets focus when clicking terminal
+  const terminalPanelDiv = document.getElementById('terminalPanel');
+  terminalPanelDiv.addEventListener('click', (e) => {
+    if (e.target !== editableSpan && !editableSpan.contains(e.target)) {
+      editableSpan.focus();
+      placeCaretAtEnd(editableSpan);
+    }
+  });
+
+  editableSpan.addEventListener('focus', () => placeCaretAtEnd(editableSpan));
   editableSpan.focus();
   placeCaretAtEnd(editableSpan);
 
-  // ------ Equal height sync (desktop only) ------
+  // Equal height sync (desktop only) – adjust terminal panel height to match face panel
   function syncHeights() {
     const facePanel = document.querySelector('.face-panel');
-    const terminalPanelEl = document.getElementById('terminalPanel');
-    if (window.innerWidth > 700 && facePanel && terminalPanelEl) {
+    const terminalPanel = document.getElementById('terminalPanel');
+    if (window.innerWidth > 700 && facePanel && terminalPanel) {
       const faceHeight = facePanel.offsetHeight;
       if (faceHeight > 0) {
-        terminalPanelEl.style.height = faceHeight + 'px';
+        terminalPanel.style.height = faceHeight + 'px';
       }
-    } else if (terminalPanelEl) {
-      terminalPanelEl.style.height = 'auto';
+    } else if (terminalPanel) {
+      terminalPanel.style.height = 'auto';
     }
   }
 
