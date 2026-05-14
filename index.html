@@ -21,11 +21,16 @@
       padding: 1.5rem;
     }
 
+    .dashboard-wrapper {
+      max-width: 1200px;
+      width: 100%;
+      position: relative;
+    }
+
     .dashboard {
       display: flex;
       flex-wrap: wrap;
       gap: 2rem;
-      max-width: 1200px;
       width: 100%;
       justify-content: center;
       align-items: flex-start;
@@ -80,7 +85,7 @@
       cursor: pointer;
     }
 
-    /* RECTANGLE PANEL - minimal contact info */
+    /* RECTANGLE PANEL - minimal with just blinking cursor */
     .terminal-panel {
       flex: 1.5;
       min-width: 280px;
@@ -92,38 +97,17 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: center;  /* vertically center the sparse content */
+      justify-content: center;
+      align-items: center;
       gap: 1.5rem;
-      overflow: auto;          /* allow scroll if needed, but content is small */
-      word-wrap: break-word;
-    }
-
-    .contact-line {
-      color: #b8e4a0;
-      text-shadow: 0 0 3px #3c8c2a;
-      font-size: 1.2rem;
-      text-align: center;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-
-    .contact-line a {
-      color: #7bc45a;
-      text-decoration: none;
-      border-bottom: 1px dotted #3c7835;
-    }
-
-    .contact-line a:hover {
-      color: #d0ffb0;
-      border-bottom: 1px solid #b8ffa0;
     }
 
     .cursor-line {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .prompt {
@@ -146,7 +130,27 @@
       50% { opacity: 0; }
     }
 
-    /* On mobile, panels stack and no height sync needed */
+    /* Contact info outside dashboard, aligned with bottom of terminal panel */
+    .contact-footer {
+      margin-top: 0.5rem;
+      text-align: right;
+      font-size: 0.8rem;
+      color: #3b6132;
+      padding-right: 0.5rem;
+    }
+
+    .contact-footer a {
+      color: #7bc45a;
+      text-decoration: none;
+      border-bottom: 1px dotted #3c7835;
+    }
+
+    .contact-footer a:hover {
+      color: #d0ffb0;
+      border-bottom: 1px solid #b8ffa0;
+    }
+
+    /* On mobile, stack and adjust */
     @media (max-width: 700px) {
       .dashboard {
         flex-direction: column;
@@ -160,30 +164,33 @@
         width: 100%;
         padding: 1.5rem;
       }
-      .contact-line {
-        font-size: 1rem;
+      .contact-footer {
+        text-align: center;
+        margin-top: 0.8rem;
       }
     }
   </style>
 </head>
 <body>
-<div class="dashboard">
-  <div class="face-panel crt-effect">
-    <canvas id="pixelFaceCanvas" width="512" height="512" style="width: 100%; height: 100%;"></canvas>
+<div class="dashboard-wrapper">
+  <div class="dashboard">
+    <div class="face-panel crt-effect">
+      <canvas id="pixelFaceCanvas" width="512" height="512" style="width: 100%; height: 100%;"></canvas>
+    </div>
+    <div class="terminal-panel crt-effect" id="terminalPanel">
+      <div class="cursor-line">
+        <span class="prompt">stray@signal:~$</span>
+        <span class="cursor"></span>
+      </div>
+    </div>
   </div>
-  <div class="terminal-panel crt-effect" id="terminalPanel">
-    <div class="contact-line">
-      📡 <a href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
-    </div>
-    <div class="cursor-line">
-      <span class="prompt">stray@signal:~$</span>
-      <span class="cursor"></span>
-    </div>
+  <div class="contact-footer">
+    📡 <a href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
   </div>
 </div>
 
 <script>
-  // Pixel face drawing (same as before)
+  // Pixel face drawing (unchanged)
   const canvas = document.getElementById('pixelFaceCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -198,14 +205,12 @@
     }
 
     if (expression === 'neutral') {
-      // eyes
       for (let x = 12; x <= 13; x++) {
         for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
       }
       for (let x = 18; x <= 19; x++) {
         for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
       }
-      // mouth straight line
       for (let i = 12; i <= 19; i++) setPixel(i, 24, '#8bc47a');
     } 
     else if (expression === 'happy') {
