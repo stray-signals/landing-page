@@ -11,7 +11,7 @@
       box-sizing: border-box;
     }
 
-    /* Fix the body to the viewport – no scrolling possible */
+    /* Lock body to viewport – no page scroll */
     html, body {
       height: 100%;
       overflow: hidden;
@@ -38,7 +38,6 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      /* ensure no overflow */
       overflow: hidden;
     }
 
@@ -163,7 +162,7 @@
       background: #8fdf5a;
     }
 
-    /* Input line */
+    /* Input line with contenteditable + block cursor */
     .input-line {
       display: flex;
       align-items: center;
@@ -243,7 +242,7 @@
       border-bottom: 1px solid #b8ffa0;
     }
 
-    /* Responsive: ensure no overflow on mobile */
+    /* Responsive adjustments */
     @media (max-width: 700px) {
       body {
         padding: 0.5rem;
@@ -270,7 +269,6 @@
       }
     }
 
-    /* For very short screens, reduce terminal height */
     @media (max-height: 600px) {
       .terminal-panel {
         max-height: 50vh;
@@ -304,7 +302,7 @@
 </div>
 
 <script>
-  // Pixel face drawing
+  // --- Pixel face drawing (refined: neutral, happy, spooked, idle) ---
   const canvas = document.getElementById('pixelFaceCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -319,43 +317,49 @@
     }
 
     if (expression === 'neutral') {
-      for (let x = 12; x <= 13; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
-      }
-      for (let x = 18; x <= 19; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#a8e6a0');
-      }
-      for (let i = 12; i <= 19; i++) setPixel(i, 24, '#8bc47a');
+      // eyes: two single pixels
+      setPixel(14, 16, '#b8ffa0');
+      setPixel(17, 16, '#b8ffa0');
+      // mouth: thin line (dim)
+      for (let i = 14; i <= 17; i++) setPixel(i, 24, '#6cb03e');
     } 
     else if (expression === 'happy') {
-      for (let x = 12; x <= 13; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#b8ffa0');
-      }
-      for (let x = 18; x <= 19; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#b8ffa0');
-      }
-      for (let i = 12; i <= 19; i++) setPixel(i, 24, '#9fd48a');
-      setPixel(13, 23, '#9fd48a');
-      setPixel(14, 22, '#9fd48a');
-      setPixel(15, 22, '#9fd48a');
-      setPixel(16, 22, '#9fd48a');
-      setPixel(17, 23, '#9fd48a');
-      setPixel(14, 24, '#b8e4a0');
-      setPixel(15, 24, '#b8e4a0');
+      // eyes: two pixels each (wider)
+      setPixel(13, 16, '#b8ffa0'); setPixel(14, 16, '#b8ffa0');
+      setPixel(17, 16, '#b8ffa0'); setPixel(18, 16, '#b8ffa0');
+      // smile curve
+      setPixel(14, 23, '#b8ffa0'); setPixel(15, 23, '#b8ffa0');
+      setPixel(16, 23, '#b8ffa0'); setPixel(17, 23, '#b8ffa0');
+      setPixel(13, 24, '#b8ffa0'); setPixel(18, 24, '#b8ffa0');
     }
     else if (expression === 'spooked') {
-      for (let x = 9; x <= 14; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#c8ffb0');
+      // large filled eyes (3x3 each)
+      for (let x = 12; x <= 14; x++) {
+        for (let y = 15; y <= 17; y++) setPixel(x, y, '#b8ffa0');
       }
-      for (let x = 17; x <= 22; x++) {
-        for (let y = 16; y <= 17; y++) setPixel(x, y, '#c8ffb0');
+      for (let x = 17; x <= 19; x++) {
+        for (let y = 15; y <= 17; y++) setPixel(x, y, '#b8ffa0');
       }
+      // O mouth (4x2)
       for (let x = 14; x <= 17; x++) {
-        setPixel(x, 24, '#b0e08a');
-        setPixel(x, 25, '#b0e08a');
+        setPixel(x, 24, '#b8ffa0');
+        setPixel(x, 25, '#b8ffa0');
       }
     }
+    else if (expression === 'idle') {
+      // colon eyes (vertical pair)
+      setPixel(14, 16, '#b8ffa0');
+      setPixel(14, 18, '#b8ffa0');
+      setPixel(17, 16, '#b8ffa0');
+      setPixel(17, 18, '#b8ffa0');
+      // underscore mouth
+      setPixel(14, 24, '#6cb03e');
+      setPixel(15, 24, '#6cb03e');
+      setPixel(16, 24, '#6cb03e');
+      setPixel(17, 24, '#6cb03e');
+    }
 
+    // subtle random static (keeps the CRT feel)
     ctx.globalAlpha = 0.15;
     for (let i = 0; i < 800; i++) {
       ctx.fillStyle = '#40ff40';
@@ -364,16 +368,55 @@
     ctx.globalAlpha = 1;
   }
 
+  // Start with neutral
   drawPixelFace('neutral');
 
-  canvas.addEventListener('mouseenter', () => drawPixelFace('spooked'));
-  canvas.addEventListener('mouseleave', () => drawPixelFace('neutral'));
+  // Interactive face (mouse/click) – temporarily overrides idle timer
+  canvas.addEventListener('mouseenter', () => {
+    drawPixelFace('spooked');
+    resetIdleTimer();   // also reset idle when face is interacted
+  });
+  canvas.addEventListener('mouseleave', () => {
+    drawPixelFace('neutral');
+    resetIdleTimer();
+  });
   canvas.addEventListener('click', () => {
     drawPixelFace('happy');
     setTimeout(() => drawPixelFace('neutral'), 1500);
+    resetIdleTimer();
   });
 
-  // Terminal logic
+  // --- Idle timer: after 10 seconds of no user activity, show 'idle' face ---
+  let idleTimeout;
+
+  function resetIdleTimer() {
+    if (idleTimeout) clearTimeout(idleTimeout);
+    // Reset to neutral if currently idle
+    if (currentExpression !== 'neutral' && currentExpression !== 'happy' && currentExpression !== 'spooked') {
+      drawPixelFace('neutral');
+    }
+    idleTimeout = setTimeout(() => {
+      drawPixelFace('idle');
+    }, 10000);
+  }
+
+  // Keep track of last expression for non‑interruption (optional)
+  let currentExpression = 'neutral';
+
+  // Override drawPixelFace to update currentExpression
+  const originalDraw = drawPixelFace;
+  window.drawPixelFace = function(expr) {
+    currentExpression = expr;
+    originalDraw(expr);
+  };
+  drawPixelFace = window.drawPixelFace;
+
+  // Call resetIdleTimer on any user activity (terminal input, clicks, keypress)
+  function userActivity() {
+    resetIdleTimer();
+  }
+
+  // --- Terminal logic (contenteditable + block cursor) ---
   const historyDiv = document.getElementById('commandHistory');
   const editableSpan = document.getElementById('editableSpan');
 
@@ -413,6 +456,7 @@
   }
 
   editableSpan.addEventListener('keydown', (e) => {
+    userActivity();  // reset idle timer on any key
     if (e.key === 'Enter') {
       e.preventDefault();
       const cmd = editableSpan.textContent;
@@ -425,19 +469,31 @@
     }
   });
 
+  // Focus management: ensure editable area gets focus when clicking terminal
   const terminalPanelDiv = document.getElementById('terminalPanel');
   terminalPanelDiv.addEventListener('click', (e) => {
+    userActivity();
     if (e.target !== editableSpan && !editableSpan.contains(e.target)) {
       editableSpan.focus();
       placeCaretAtEnd(editableSpan);
     }
   });
 
-  editableSpan.addEventListener('focus', () => placeCaretAtEnd(editableSpan));
+  editableSpan.addEventListener('focus', () => {
+    userActivity();
+    placeCaretAtEnd(editableSpan);
+  });
+  editableSpan.addEventListener('input', userActivity);
+
+  // Global click listener to catch any clicks outside terminal (still resets idle)
+  document.body.addEventListener('click', userActivity);
+
+  // Initial focus and idle timer start
   editableSpan.focus();
   placeCaretAtEnd(editableSpan);
+  resetIdleTimer();
 
-  // Equal height sync (desktop only) – optional, but keep
+  // --- Equal height sync (desktop only) – optional ---
   function syncHeights() {
     const facePanel = document.querySelector('.face-panel');
     const terminalPanel = document.getElementById('terminalPanel');
