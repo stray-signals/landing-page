@@ -5,16 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>straysignals.dev :: interactive terminal</title>
   <style>
-    /* Global reset – no page scrolling, only internal scrolling inside terminal */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    /* Fix the body to the viewport – no scrolling possible */
     html, body {
       height: 100%;
-      overflow: hidden;          /* prevents page scroll */
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
     }
 
     body {
@@ -34,6 +38,8 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      /* ensure no overflow */
+      overflow: hidden;
     }
 
     .dashboard {
@@ -48,7 +54,7 @@
     /* SQUARE PANEL */
     .face-panel {
       flex: 1;
-      min-width: 260px;
+      min-width: 200px;
       aspect-ratio: 1 / 1;
       background: #0c100c;
       border: 2px solid #2f4f2f;
@@ -94,10 +100,10 @@
       cursor: pointer;
     }
 
-    /* TERMINAL PANEL – takes remaining height, scrolls internally */
+    /* TERMINAL PANEL – internal scroll only */
     .terminal-panel {
       flex: 1.5;
-      min-width: 280px;
+      min-width: 260px;
       background: #0c100c;
       border: 2px solid #2f4f2f;
       border-radius: 28px;
@@ -105,12 +111,12 @@
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
       display: flex;
       flex-direction: column;
-      height: 100%;
-      max-height: 70vh;         /* keeps terminal from overflowing on mobile */
+      height: auto;
+      max-height: 70vh;
       overflow: hidden;
     }
 
-    /* Scrollable command history – this is where scrolling happens */
+    /* Scrollable command history */
     .command-history {
       flex: 1;
       overflow-y: auto;
@@ -157,7 +163,7 @@
       background: #8fdf5a;
     }
 
-    /* Input line with contenteditable + block cursor */
+    /* Input line */
     .input-line {
       display: flex;
       align-items: center;
@@ -237,7 +243,7 @@
       border-bottom: 1px solid #b8ffa0;
     }
 
-    /* Responsive adjustments */
+    /* Responsive: ensure no overflow on mobile */
     @media (max-width: 700px) {
       body {
         padding: 0.5rem;
@@ -248,11 +254,11 @@
         gap: 1rem;
       }
       .face-panel {
-        max-width: 280px;
+        max-width: 240px;
         width: 100%;
       }
       .terminal-panel {
-        max-height: 60vh;
+        max-height: 55vh;
         width: 100%;
         padding: 0.8rem;
       }
@@ -264,10 +270,13 @@
       }
     }
 
-    /* Fix for very tall screens: keep terminal from growing too much */
-    @media (min-height: 800px) {
+    /* For very short screens, reduce terminal height */
+    @media (max-height: 600px) {
       .terminal-panel {
-        max-height: 65vh;
+        max-height: 50vh;
+      }
+      .face-panel {
+        max-width: 180px;
       }
     }
   </style>
@@ -295,7 +304,7 @@
 </div>
 
 <script>
-  // Pixel face drawing (unchanged)
+  // Pixel face drawing
   const canvas = document.getElementById('pixelFaceCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -364,10 +373,9 @@
     setTimeout(() => drawPixelFace('neutral'), 1500);
   });
 
-  // Terminal logic with contenteditable and block cursor
+  // Terminal logic
   const historyDiv = document.getElementById('commandHistory');
   const editableSpan = document.getElementById('editableSpan');
-  const blockCursor = document.getElementById('blockCursor');
 
   function placeCaretAtEnd(el) {
     el.focus();
@@ -417,7 +425,6 @@
     }
   });
 
-  // Focus management: ensure editable area gets focus when clicking terminal
   const terminalPanelDiv = document.getElementById('terminalPanel');
   terminalPanelDiv.addEventListener('click', (e) => {
     if (e.target !== editableSpan && !editableSpan.contains(e.target)) {
@@ -430,7 +437,7 @@
   editableSpan.focus();
   placeCaretAtEnd(editableSpan);
 
-  // Equal height sync (desktop only) – adjust terminal panel height to match face panel
+  // Equal height sync (desktop only) – optional, but keep
   function syncHeights() {
     const facePanel = document.querySelector('.face-panel');
     const terminalPanel = document.getElementById('terminalPanel');
@@ -443,7 +450,6 @@
       terminalPanel.style.height = 'auto';
     }
   }
-
   window.addEventListener('load', syncHeights);
   window.addEventListener('resize', syncHeights);
   if (window.ResizeObserver) {
