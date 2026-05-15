@@ -1,12 +1,15 @@
+import { EXPRESSIONS } from './expressions.js';
+
 const canvas = document.getElementById('pixelFaceCanvas');
 const ctx = canvas.getContext('2d');
 
 let currentExpression = 'neutral';
 let idleTimeout;
 
-function setPixel(x, y, color) {
+// 64×32 grid — each cell is 8px wide × 16px tall on the 512×512 canvas
+function setPixel(col, row, color) {
   ctx.fillStyle = color;
-  ctx.fillRect(x * 32, y * 32, 32, 32);
+  ctx.fillRect(col * 8, row * 16, 8, 16);
 }
 
 function drawPixelFace(expression = 'neutral') {
@@ -15,46 +18,16 @@ function drawPixelFace(expression = 'neutral') {
   ctx.fillStyle = '#0b1f0a';
   ctx.fillRect(0, 0, 512, 512);
 
-  if (expression === 'neutral') {
-    for (let dx = 0; dx <= 1; dx++) {
-      for (let dy = 0; dy <= 1; dy++) {
-        setPixel(5 + dx, 6 + dy, '#b8ffa0');
-        setPixel(9 + dx, 6 + dy, '#b8ffa0');
-      }
+  const pattern = EXPRESSIONS[expression] ?? [];
+  for (let row = 0; row < pattern.length; row++) {
+    const line = pattern[row].padEnd(64, '*');
+    for (let col = 0; col < 64; col++) {
+      const ch = line[col];
+      if (ch === '@') setPixel(col, row, '#b8ffa0');
     }
-    for (let i = 5; i <= 10; i++) setPixel(i, 11, '#6cb03e');
-
-  } else if (expression === 'happy') {
-    for (let dx = 0; dx <= 2; dx++) {
-      for (let dy = 0; dy <= 1; dy++) {
-        setPixel(4 + dx, 6 + dy, '#b8ffa0');
-        setPixel(9 + dx, 6 + dy, '#b8ffa0');
-      }
-    }
-    for (let i = 5; i <= 10; i++) setPixel(i, 11, '#b8ffa0');
-    setPixel(4, 12, '#b8ffa0');
-    setPixel(5, 12, '#b8ffa0'); setPixel(6, 12, '#b8ffa0');
-    setPixel(9, 12, '#b8ffa0'); setPixel(10, 12, '#b8ffa0');
-    setPixel(11, 12, '#b8ffa0');
-
-  } else if (expression === 'spooked') {
-    for (let x = 4; x <= 7; x++) {
-      for (let y = 5; y <= 8; y++) setPixel(x, y, '#b8ffa0');
-    }
-    for (let x = 9; x <= 12; x++) {
-      for (let y = 5; y <= 8; y++) setPixel(x, y, '#b8ffa0');
-    }
-    for (let x = 5; x <= 10; x++) {
-      setPixel(x, 11, '#b8ffa0');
-      setPixel(x, 12, '#b8ffa0');
-    }
-
-  } else if (expression === 'idle') {
-    setPixel(6, 6, '#b8ffa0'); setPixel(6, 7, '#b8ffa0');
-    setPixel(9, 6, '#b8ffa0'); setPixel(9, 7, '#b8ffa0');
-    for (let i = 5; i <= 10; i++) setPixel(i, 12, '#6cb03e');
   }
 
+  // Subtle static overlay
   ctx.globalAlpha = 0.15;
   for (let i = 0; i < 800; i++) {
     ctx.fillStyle = '#40ff40';
@@ -63,17 +36,31 @@ function drawPixelFace(expression = 'neutral') {
   ctx.globalAlpha = 1;
 }
 
+export { drawPixelFace };
+
 export function resetIdleTimer() {
   clearTimeout(idleTimeout);
   if (currentExpression === 'idle') drawPixelFace('neutral');
   idleTimeout = setTimeout(() => drawPixelFace('idle'), 10000);
 }
 
-canvas.addEventListener('mouseenter', () => { drawPixelFace('spooked'); resetIdleTimer(); });
+let frustrationClicks = 0;
+let frustrationResetTimeout;
+
+canvas.addEventListener('mouseenter', () => { drawPixelFace('laughing'); resetIdleTimer(); });
 canvas.addEventListener('mouseleave', () => { drawPixelFace('neutral'); resetIdleTimer(); });
 canvas.addEventListener('click', () => {
-  drawPixelFace('happy');
-  setTimeout(() => drawPixelFace('neutral'), 1500);
+  drawPixelFace('frustrated');
+  frustrationClicks++;
+  clearTimeout(frustrationResetTimeout);
+  if (frustrationClicks >= 3) {
+    document.dispatchEvent(new CustomEvent('avatar:overtapped'));
+    frustrationClicks = 0;
+  }
+  frustrationResetTimeout = setTimeout(() => {
+    frustrationClicks = 0;
+    drawPixelFace('neutral');
+  }, 1500);
   resetIdleTimer();
 });
 

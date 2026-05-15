@@ -1,5 +1,7 @@
 import { COMMANDS } from './commands.js';
-import { resetIdleTimer } from '../avatar/avatar.js';
+import { resetIdleTimer, drawPixelFace } from '../avatar/avatar.js';
+
+let typingRevertTimeout;
 
 const historyDiv = document.getElementById('commandHistory');
 const editableSpan = document.getElementById('editableSpan');
@@ -53,6 +55,11 @@ function syncHeights() {
 
 editableSpan.addEventListener('keydown', (e) => {
   resetIdleTimer();
+  if (e.key !== 'Enter') {
+    drawPixelFace('talking');
+    clearTimeout(typingRevertTimeout);
+    typingRevertTimeout = setTimeout(() => drawPixelFace('neutral'), 800);
+  }
   if (e.key === 'Enter') {
     e.preventDefault();
     const cmd = editableSpan.textContent;
@@ -81,6 +88,10 @@ if (window.ResizeObserver) {
   const facePanel = document.querySelector('.face-panel');
   if (facePanel) new ResizeObserver(syncHeights).observe(facePanel);
 }
+
+document.addEventListener('avatar:overtapped', () => {
+  addMessage('stray', 'hey. stop tapping my screen.');
+});
 
 editableSpan.focus();
 placeCaretAtEnd(editableSpan);
