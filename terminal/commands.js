@@ -76,10 +76,64 @@ COMMANDS.set('contact', {
   ].join('\n'),
 });
 
-COMMANDS.set('links', {
-  description: 'Sites Stray recommends',
-  run: () => ({ action: 'showLinks' }),
+COMMANDS.set('cat', {
+  description: 'Read a log file. try: cat transmissions.log',
+  run: async (args) => {
+    // Parse optional pipe: cat transmissions.log | grep [type]
+    const [file, ...rest] = args.split('|').map(s => s.trim());
+    const grepMatch = rest[0]?.match(/^grep\s+(\S+)$/);
+    const filter = grepMatch?.[1] ?? null;
+
+    if (file !== 'transmissions.log') {
+      return `cat: ${file || '?'}: no such file in this signal`;
+    }
+
+    const res = await fetch('transmissions/log.json');
+    if (!res.ok) return 'log corrupted. could not read.';
+
+    let entries = (await res.json())
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    if (filter) {
+      entries = entries.filter(e =>
+        e.type === filter ||
+        (filter === 'signal' && e.signal_sent)
+      );
+    }
+
+    if (!entries.length) return filter
+      ? `no entries matching [${filter}].`
+      : 'log is empty.';
+
+    return entries.map(formatLogEntry).join('\n\n');
+  },
 });
+
+COMMANDS.set('tail', {
+  description: 'Show most recent log entries. try: tail transmissions.log',
+  run: async (args) => {
+    if (args.trim() !== 'transmissions.log') {
+      return `tail: ${args.trim() || '?'}: no such file in this signal`;
+    }
+
+    const res = await fetch('transmissions/log.json');
+    if (!res.ok) return 'log corrupted. could not read.';
+
+    const entries = (await res.json())
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 3);
+
+    if (!entries.length) return 'log is empty.';
+    return entries.map(formatLogEntry).join('\n\n');
+  },
+});
+
+function formatLogEntry(e) {
+  const header = `[${e.date}] [${e.type}]${e.target ? ' ' + e.target : ''}`;
+  const lines  = [header, e.copy];
+  if (e.url) lines.push(e.signal_sent ? '→ signal sent' : '→ signal pending');
+  return lines.join('\n');
+}
 
 COMMANDS.set('msg', {
   description: 'Leave a message for Stray',

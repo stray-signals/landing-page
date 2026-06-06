@@ -1,7 +1,6 @@
 import { COMMANDS } from './commands.js';
 import { resetIdleTimer, drawPixelFace } from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
-import { initLinksPopup, showLinksPopup } from '../js/links-popup.js';
 
 const timeBlock = TIME_BLOCKS[getTimeBlock()];
 
@@ -88,7 +87,6 @@ async function processCommand(input) {
 
   if (result?.action === 'clear')          { historyDiv.innerHTML = ''; }
   else if (result?.action === 'startMsg')  { startMessageMode(); }
-  else if (result?.action === 'showLinks') { showLinksPopup(); }
   else if (typeof result === 'string')     { addMessage('stray', result); }
 }
 
@@ -161,8 +159,6 @@ document.addEventListener('avatar:overtapped', () => {
 });
 
 // ── Init ───────────────────────────────────────────────────────────
-initLinksPopup();
-
 promptEl.textContent = timeBlock.prompt;
 
 timeBlock.greeting.forEach((line, i) => {
