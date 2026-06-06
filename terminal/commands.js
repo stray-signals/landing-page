@@ -1,4 +1,5 @@
 import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
+import { play, stop, isPlaying, getNowPlaying } from '../js/player.js';
 
 export const COMMANDS = new Map();
 
@@ -38,6 +39,23 @@ COMMANDS.set('ls', {
   ].join('\n'),
 });
 
+COMMANDS.set('freq', {
+  description: 'Play/stop audio transmissions. "freq stop" to end.',
+  run: (args) => {
+    if (args === 'stop') {
+      return stop()
+        ? 'transmission ended.'
+        : 'nothing is broadcasting.';
+    }
+    if (isPlaying()) {
+      const np = getNowPlaying();
+      return `broadcasting: ${np.label}`;
+    }
+    const result = play();
+    return `>> ${result.track.label}\ntransmission active.`;
+  },
+});
+
 COMMANDS.set('contact', {
   description: "Stray's signal card",
   run: () => [
@@ -49,6 +67,16 @@ COMMANDS.set('contact', {
     '-------------------',
     'you can also reach me the old-fashioned way.',
   ].join('\n'),
+});
+
+COMMANDS.set('links', {
+  description: 'Sites Stray recommends',
+  run: () => ({ action: 'showLinks' }),
+});
+
+COMMANDS.set('msg', {
+  description: 'Leave a message for Stray',
+  run: () => ({ action: 'startMsg' }),
 });
 
 COMMANDS.set('help', {
