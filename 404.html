@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>straysignals.dev :: lost in the static</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', 'Fira Code', monospace;
+      padding: 1rem;
+    }
+
+    .terminal {
+      width: 100%;
+      max-width: 600px;
+      background: #0c100c;
+      border: 2px solid #2f4f2f;
+      border-radius: 28px;
+      padding: 1.5rem;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
+      position: relative;
+    }
+
+    /* CRT scanlines */
+    .terminal::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 255, 0, 0.03) 0px,
+        rgba(0, 255, 0, 0.03) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      pointer-events: none;
+      border-radius: inherit;
+      z-index: 1;
+    }
+
+    .output {
+      min-height: 260px;
+      max-height: 60vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+      padding-right: 0.5rem;
+    }
+
+    .line {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .stray  { color: #b8ffa0; }
+    .player { color: #a0c0e0; }
+    .dim    { color: #3b6132; }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-top: 1px solid #2f4f2f;
+      padding-top: 0.8rem;
+    }
+
+    .prompt { color: #b8ffa0; font-weight: bold; white-space: nowrap; font-size: 0.9rem; }
+
+    #cmdInput {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #b8e4a0;
+      font-family: inherit;
+      font-size: 0.9rem;
+      flex: 1;
+      caret-color: #b8ffa0;
+    }
+
+    /* scrollbar */
+    .output::-webkit-scrollbar { width: 6px; }
+    .output::-webkit-scrollbar-track { background: #0c100c; }
+    .output::-webkit-scrollbar-thumb { background: #3c7835; }
+  </style>
+</head>
+<body>
+<div class="terminal">
+  <div class="output" id="output"></div>
+  <div class="input-row">
+    <span class="prompt">lost@signal:~$</span>
+    <input id="cmdInput" type="text" autocomplete="off" autofocus spellcheck="false">
+  </div>
+</div>
+
+<script>
+  // ── Rooms ──────────────────────────────────────────────────────────
+  const ROOMS = {
+    static: {
+      description: [
+        'you are lost in the static.',
+        'the signal is everywhere and nowhere.',
+        'something went wrong. or maybe right.',
+        'a faint glow pulses to the east.',
+      ],
+      exits: { east: 'clearing' },
+    },
+    clearing: {
+      description: [
+        'a clearing in the noise.',
+        'dead trees ring the edge. one has something carved in its bark:',
+        '  straysignals.dev',
+        'a worn path leads north. the way back is west.',
+      ],
+      exits: { west: 'static', north: 'tower' },
+    },
+    tower: {
+      description: [
+        'a transmission tower blinks red against the nothing.',
+        'at its base: a terminal. the screen reads:',
+        '  > straysignals.dev',
+        '',
+        'type "transmit" to lock on and go home.',
+      ],
+      exits: { south: 'clearing' },
+    },
+  };
+
+  // ── State ──────────────────────────────────────────────────────────
+  let current = 'static';
+
+  // ── Output helpers ─────────────────────────────────────────────────
+  const output = document.getElementById('output');
+
+  function print(text, cls = 'stray') {
+    const el = document.createElement('div');
+    el.className = `line ${cls}`;
+    el.textContent = text;
+    output.appendChild(el);
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function printRoom(roomId) {
+    const room = ROOMS[roomId];
+    print('');
+    room.description.forEach(l => print(l));
+    const exits = Object.keys(room.exits);
+    if (exits.length) print(`exits: ${exits.join(', ')}`, 'dim');
+  }
+
+  // ── Command parser ─────────────────────────────────────────────────
+  function handle(input) {
+    const raw = input.trim().toLowerCase();
+    if (!raw) return;
+
+    print(`> ${input}`, 'player');
+
+    if (raw === 'help') {
+      print('commands: go [direction], look, transmit, home');
+      return;
+    }
+
+    if (raw === 'look') {
+      printRoom(current);
+      return;
+    }
+
+    if (raw === 'transmit' || raw === 'home' || raw === 'signal') {
+      if (current === 'tower') {
+        print('locking on...');
+        setTimeout(() => print('signal acquired. returning.'), 600);
+        setTimeout(() => { window.location.href = '/'; }, 1800);
+      } else {
+        print('no tower in range. keep moving.');
+      }
+      return;
+    }
+
+    const goMatch = raw.match(/^go\s+(north|south|east|west|n|s|e|w)$/);
+    if (goMatch) {
+      const dirMap = { n: 'north', s: 'south', e: 'east', w: 'west' };
+      const dir = dirMap[goMatch[1]] ?? goMatch[1];
+      const next = ROOMS[current].exits[dir];
+      if (next) {
+        current = next;
+        printRoom(current);
+      } else {
+        print('nothing that way. the static thickens.');
+      }
+      return;
+    }
+
+    // shorthand directions
+    if (['north','south','east','west','n','s','e','w'].includes(raw)) {
+      const dirMap = { n: 'north', s: 'south', e: 'east', w: 'west' };
+      const dir = dirMap[raw] ?? raw;
+      const next = ROOMS[current].exits[dir];
+      if (next) {
+        current = next;
+        printRoom(current);
+      } else {
+        print('nothing that way. the static thickens.');
+      }
+      return;
+    }
+
+    print(`"${raw}" — stray isn\'t here to help. try "help".`);
+  }
+
+  // ── Input listener ─────────────────────────────────────────────────
+  document.getElementById('cmdInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const val = e.target.value;
+      e.target.value = '';
+      handle(val);
+    }
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────────
+  const boot = [
+    '404 — signal not found.',
+    'you took a wrong turn somewhere in the static.',
+    '',
+  ];
+  boot.forEach((l, i) => setTimeout(() => print(l, 'dim'), i * 300));
+  setTimeout(() => printRoom('static'), boot.length * 300);
+</script>
+</body>
+</html>

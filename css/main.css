@@ -212,25 +212,6 @@ body {
   50% { opacity: 0; }
 }
 
-.contact-footer {
-  margin-top: 0.5rem;
-  text-align: right;
-  font-size: 0.8rem;
-  color: #3b6132;
-  padding-right: 0.5rem;
-  flex-shrink: 0;
-}
-
-.contact-footer a {
-  color: #7bc45a;
-  text-decoration: none;
-  border-bottom: 1px dotted #3c7835;
-}
-
-.contact-footer a:hover {
-  color: #d0ffb0;
-  border-bottom: 1px solid #b8ffa0;
-}
 
 @media (max-width: 700px) {
   body {
@@ -253,9 +234,7 @@ body {
   .input-prompt, .editable-area {
     font-size: 0.85rem;
   }
-  .contact-footer {
-    text-align: center;
-  }
+
 }
 
 @media (max-height: 600px) {
