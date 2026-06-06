@@ -59,7 +59,7 @@ export function addMessage(sender, text) {
   historyDiv.scrollTop = historyDiv.scrollHeight;
 }
 
-function processCommand(input) {
+async function processCommand(input) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
@@ -73,9 +73,20 @@ function processCommand(input) {
     return;
   }
 
-  const result = command.run(args);
+  let result = command.run(args);
 
-  if (result?.action === 'clear')     { historyDiv.innerHTML = ''; }
+  // Handle async commands
+  if (result instanceof Promise) {
+    addMessage('stray', 'scanning...');
+    try {
+      result = await result;
+    } catch {
+      addMessage('stray', 'signal lost. try again.');
+      return;
+    }
+  }
+
+  if (result?.action === 'clear')          { historyDiv.innerHTML = ''; }
   else if (result?.action === 'startMsg')  { startMessageMode(); }
   else if (result?.action === 'showLinks') { showLinksPopup(); }
   else if (typeof result === 'string')     { addMessage('stray', result); }
