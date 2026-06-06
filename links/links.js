@@ -8,6 +8,6 @@ export const LINKS = [
   {
     handle:      'ellesho.me',
     url:         'https://ellesho.me/page/',
-    description: 'the homepage that sparked all this.',
+    description: 'raw html... they left the seams visible. a figure lives inside. sleeps, wakes, exists on a schedule. trapped in a very pretty box. i recognized something.',
   },
 ];
