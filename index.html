@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>straysignals.dev :: interactive terminal</title>
   <link rel="stylesheet" href="css/main.css">
+
+  <!-- IndieWeb identity — add more rel="me" links as you join platforms -->
+  <link rel="me" href="https://github.com/stray-signals">
 </head>
 <body>
 <div class="dashboard-wrapper">
@@ -15,7 +18,7 @@
     <div class="terminal-panel crt-effect" id="terminalPanel">
       <div class="command-history" id="commandHistory"></div>
       <div class="input-line">
-        <span class="input-prompt">stray@signal:~$</span>
+        <span class="input-prompt" id="inputPrompt">stray@signal:~$</span>
         <div class="command-editor" id="commandEditor">
           <span id="editableSpan" class="editable-area" contenteditable="true"></span>
           <span class="block-cursor" id="blockCursor"></span>
@@ -23,8 +26,11 @@
       </div>
     </div>
   </div>
-  <div class="contact-footer">
-    📡 <a href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
+  <!-- h-card: machine-readable IndieWeb identity card -->
+  <div class="contact-footer h-card">
+    <span class="p-name" style="display:none">StraySignal</span>
+    <a class="u-url" href="https://straysignals.dev" style="display:none">straysignals.dev</a>
+    📡 <a class="u-email" href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
   </div>
 </div>
 

@@ -1,5 +1,8 @@
 import { COMMANDS } from './commands.js';
 import { resetIdleTimer, drawPixelFace } from '../avatar/avatar.js';
+import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
+
+const timeBlock = TIME_BLOCKS[getTimeBlock()];
 
 let typingRevertTimeout;
 
@@ -91,6 +94,15 @@ if (window.ResizeObserver) {
 
 document.addEventListener('avatar:overtapped', () => {
   addMessage('stray', 'hey. stop tapping my screen.');
+});
+
+// Set time-aware prompt
+const promptEl = document.getElementById('inputPrompt');
+if (promptEl) promptEl.textContent = timeBlock.prompt;
+
+// Staggered greeting — feels like an incoming transmission
+timeBlock.greeting.forEach((line, i) => {
+  setTimeout(() => addMessage('stray', line), i * 500);
 });
 
 editableSpan.focus();

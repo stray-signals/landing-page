@@ -1,4 +1,5 @@
 import { EXPRESSIONS } from './expressions.js';
+import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
 
 const canvas = document.getElementById('pixelFaceCanvas');
 const ctx = canvas.getContext('2d');
@@ -20,7 +21,7 @@ function drawPixelFace(expression = 'neutral') {
 
   const pattern = EXPRESSIONS[expression] ?? [];
   for (let row = 0; row < pattern.length; row++) {
-    const line = pattern[row].padEnd(64, '*');
+    const line = pattern[row].padEnd(64, '.');
     for (let col = 0; col < 64; col++) {
       const ch = line[col];
       if (ch === '@') setPixel(col, row, '#b8ffa0');
@@ -64,5 +65,5 @@ canvas.addEventListener('click', () => {
   resetIdleTimer();
 });
 
-drawPixelFace('neutral');
+drawPixelFace(TIME_BLOCKS[getTimeBlock()].defaultExpression);
 resetIdleTimer();
