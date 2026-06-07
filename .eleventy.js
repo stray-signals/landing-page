@@ -1,5 +1,11 @@
 module.exports = function(eleventyConfig) {
 
+  // Converts YYYY-MM-DD to a full RFC 3339 timestamp for Atom feeds
+  eleventyConfig.addFilter('toRfc3339', (dateStr) => {
+    return new Date(dateStr + 'T00:00:00Z').toISOString();
+  });
+
+
   // Static assets — copied straight through, no processing
   eleventyConfig.addPassthroughCopy("css");
   eleventyConfig.addPassthroughCopy("avatar");

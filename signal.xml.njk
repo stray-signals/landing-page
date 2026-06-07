@@ -1,0 +1,39 @@
+---
+permalink: /signal.xml
+---
+<?xml version="1.0" encoding="utf-8"?>
+<!-- straysignals.dev :: transmission log -->
+<!-- if you're reading this raw, hello. stray sees you. -->
+{% set sorted = transmissions | sort(true, false, 'date') %}
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title>straysignals.dev :: transmission log</title>
+  <subtitle>field notes from the space between signals. stray is out there. this is the signal.</subtitle>
+  <link href="https://straysignals.dev/signal.xml" rel="self" type="application/atom+xml"/>
+  <link href="https://straysignals.dev/"/>
+  <id>https://straysignals.dev/</id>
+  <updated>{{ sorted[0].date | toRfc3339 }}</updated>
+
+  <author>
+    <name>StraySignal</name>
+    <uri>https://straysignals.dev</uri>
+  </author>
+
+  {% for entry in sorted %}
+  <entry>
+    <title>[{{ entry.type }}] {% if entry.target %}{{ entry.target }}{% else %}void{% endif %}</title>
+    <link href="https://straysignals.dev/transmissions/{{ entry.id }}/"/>
+    <id>https://straysignals.dev/transmissions/{{ entry.id }}/</id>
+    <updated>{{ entry.date | toRfc3339 }}</updated>
+    <author>
+      <name>StraySignal</name>
+      <uri>https://straysignals.dev</uri>
+    </author>
+    <content type="text">{{ entry.copy }}{% if entry.url %}
+
+→ {{ entry.target }}: {{ entry.url }}{% endif %}{% if entry.signal_sent %}
+→ signal sent{% endif %}</content>
+  </entry>
+  {% endfor %}
+
+</feed>
