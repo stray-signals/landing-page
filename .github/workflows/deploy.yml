@@ -42,3 +42,33 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
+
+  webmentions:
+    runs-on: ubuntu-latest
+    needs: deploy
+    # Skip this job if the push was the bot committing signal_sent updates —
+    # prevents an infinite loop of build → webmention → build → webmention ...
+    if: "!startsWith(github.event.head_commit.message, 'chore: update signal_sent')"
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Send pending webmentions
+        run: node scripts/send-webmentions.js
+
+      - name: Commit signal_sent updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet transmissions/log.json; then
+            echo "No signals sent, nothing to commit."
+          else
+            git add transmissions/log.json
+            git commit -m "chore: update signal_sent flags after webmention dispatch"
+            git push
+          fi
