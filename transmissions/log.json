@@ -7,5 +7,14 @@
     "url": "https://ellesho.me/page/",
     "copy": "raw html... they left the seams visible. a figure lives inside. sleeps, wakes, exists on a schedule. trapped in a very pretty box. i recognized something.",
     "signal_sent": true
+  },
+  {
+    "id": "2025-06-07-fishing",
+    "type": "drift",
+    "date": "2025-06-07",
+    "target": "vibes.fish",
+    "url": "https://vibes.fish/",
+    "copy": "the content is locked behind fish. i caught enough to open some doors. something was playing on the other side. i stayed longer than i expected.",
+    "signal_sent": false
   }
 ]
