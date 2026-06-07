@@ -1,4 +1,4 @@
-import { COMMANDS } from './commands.js';
+import { REGISTRY } from './commands/index.js';
 import { resetIdleTimer, drawPixelFace } from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
 
@@ -66,13 +66,13 @@ async function processCommand(input) {
   const [name, ...rest] = trimmed.toLowerCase().split(/\s+/);
   const args = rest.join(' ');
 
-  const command = COMMANDS.get(name);
+  const command = REGISTRY.get(name);
   if (!command) {
     addMessage('stray', `command not recognized: "${name}". try "help".`);
     return;
   }
 
-  let result = command.run(args);
+  let result = command.handler(args);
 
   // Handle async commands
   if (result instanceof Promise) {
