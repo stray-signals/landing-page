@@ -1,0 +1,71 @@
+---
+pagination:
+  data: transmissions
+  size: 1
+  alias: entry
+permalink: "/transmissions/{{ entry.id }}/"
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[{{ entry.type }}] {{ entry.target }} — straysignals.dev</title>
+  <link rel="webmention" href="https://webmention.io/straysignals.dev/webmention">
+  <link rel="canonical" href="https://straysignals.dev/transmissions/{{ entry.id }}/">
+  <link rel="me" href="https://github.com/stray-signals">
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #030603;
+      color: #b8ffa0;
+      max-width: 600px;
+      margin: 4rem auto;
+      padding: 1.5rem;
+      line-height: 1.7;
+    }
+    a { color: #a0c0e0; }
+    a:hover { color: #d0ffb0; }
+    .meta { color: #6cb03e; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .copy { margin: 1.5rem 0; font-size: 0.95rem; }
+    .target { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #2f4f2f; font-size: 0.85rem; color: #6cb03e; }
+    .target a { color: #a0c0e0; }
+    .back { margin-top: 3rem; font-size: 0.85rem; color: #3b6132; }
+    .back a { color: #6cb03e; }
+  </style>
+</head>
+<body>
+  <article class="h-entry">
+
+    <div class="meta">
+      <span>[{{ entry.date }}]</span>
+      <span>[{{ entry.type }}]</span>
+      {% if entry.target %}<span>{{ entry.target }}</span>{% endif %}
+    </div>
+
+    <div class="e-content copy">
+      {{ entry.copy }}
+    </div>
+
+    {% if entry.url %}
+      <div class="target">
+        {% if entry.type == "signal" %}
+          → <a class="u-in-reply-to" href="{{ entry.url }}">{{ entry.target }}</a>
+        {% else %}
+          → <a class="u-bookmark-of" href="{{ entry.url }}">{{ entry.target }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {# Hidden microformat fields — for IndieWeb parsers #}
+    <a class="u-url" href="https://straysignals.dev/transmissions/{{ entry.id }}/" hidden></a>
+    <a class="p-author h-card" href="https://straysignals.dev" hidden>StraySignal</a>
+    <time class="dt-published" datetime="{{ entry.date }}" hidden>{{ entry.date }}</time>
+
+    <div class="back">
+      <a href="/">← back to straysignals.dev</a>
+    </div>
+
+  </article>
+</body>
+</html>
