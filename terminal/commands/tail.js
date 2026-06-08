@@ -1,4 +1,4 @@
-import { formatLogEntry, resolveFile, fetchLogEntries } from './_utils.js';
+import { formatLogEntry, resolveFile, fetchLogEntries, readProjectLog } from './_utils.js';
 
 export default {
   name:        'tail',
@@ -7,6 +7,10 @@ export default {
   handler: async (args) => {
     const { node, error } = resolveFile(args.trim());
     if (error) return `tail: ${error}`;
+
+    if (node.kind === 'project-log') {
+      return readProjectLog(node);
+    }
 
     const entries = await fetchLogEntries(node);
     if (!entries) return 'log corrupted. could not read.';

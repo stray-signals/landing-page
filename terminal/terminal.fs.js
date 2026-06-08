@@ -1,4 +1,5 @@
 import { listTracks } from '../scripts/player.js';
+import { PROJECTS }  from '../root/projects/projects.data.js';
 
 // ── Virtual filesystem ─────────────────────────────────────────────
 // Each node: { type, description?, locked?, children?, listFn? }
@@ -35,7 +36,26 @@ const filesystem = {
         );
       },
     },
-    projects: { type: 'dir', locked: true },
+    projects: {
+      type: 'dir',
+      description: 'stray projects',
+      children: Object.fromEntries(
+        Object.values(PROJECTS).map(p => [
+          p.id,
+          {
+            type: 'dir',
+            children: {
+              [`${p.id}.log`]: {
+                type:        'file',
+                kind:        'project-log',
+                description: `stray's notes on ${p.id}`,
+                content:     p.log,
+              },
+            },
+          },
+        ])
+      ),
+    },
     models:   { type: 'dir', locked: true },
     portals:  { type: 'dir', locked: true },
   },

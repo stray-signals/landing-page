@@ -28,9 +28,15 @@ export function resolveFile(fileArg) {
   const node = getNode([...getCwd(), fileArg]);
   if (!node)               return { error: `${fileArg}: no such file` };
   if (node.type === 'dir') return { error: `${fileArg}: is a directory` };
-  if (node.kind !== 'log') return { error: KIND_ERRORS[node.kind] ?? `${fileArg}: unreadable` };
+  const readable = node.kind === 'log' || node.kind === 'project-log';
+  if (!readable)           return { error: KIND_ERRORS[node.kind] ?? `${fileArg}: unreadable` };
 
   return { node };
+}
+
+// Returns the content of a project-log node as a formatted string.
+export function readProjectLog(node) {
+  return node.content.join('\n');
 }
 
 // ── Log fetching ───────────────────────────────────────────────────
