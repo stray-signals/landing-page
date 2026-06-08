@@ -1,22 +1,17 @@
-import { formatLogEntry } from './_utils.js';
+import { formatLogEntry, resolveFile, fetchLogEntries } from './_utils.js';
 
 export default {
   name:        'tail',
-  description: 'show the most recent log entries',
-  usage:       'tail transmissions.log',
+  description: 'read the latest entry in a file',
+  usage:       'tail <file>',
   handler: async (args) => {
-    if (args.trim() !== 'transmissions.log') {
-      return `tail: ${args.trim() || '?'}: no such file in this signal`;
-    }
+    const { node, error } = resolveFile(args.trim());
+    if (error) return `tail: ${error}`;
 
-    const res = await fetch('transmissions/log.json');
-    if (!res.ok) return 'log corrupted. could not read.';
-
-    const entries = (await res.json())
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 3);
-
+    const entries = await fetchLogEntries(node);
+    if (!entries) return 'log corrupted. could not read.';
     if (!entries.length) return 'log is empty.';
-    return entries.map(formatLogEntry).join('\n\n');
+
+    return formatLogEntry(entries[0]);
   },
 };

@@ -5,7 +5,7 @@ const path = require('path');
 
 module.exports = function() {
   const raw = fs.readFileSync(
-    path.join(__dirname, '..', 'transmissions', 'log.json'),
+    path.join(__dirname, '..', 'root', 'transmissions', 'log.json'),
     'utf-8'
   );
   return JSON.parse(raw);

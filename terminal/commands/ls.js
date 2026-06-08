@@ -1,10 +1,24 @@
+import { listCwd, getCwdString } from '../terminal.fs.js';
+
+const COL_WIDTH = 24; // name column width
+
 export default {
   name:        'ls',
-  description: 'list available files and locations',
-  handler: () => [
-    '-rw-r--r--  transmissions.log    stray\'s field notes  →  cat transmissions.log',
-    'drwxr-xr-x  projects/            [signal lost]',
-    'drwxr-xr-x  models/              [signal lost]',
-    'drwxr-xr-x  portals/             [signal lost]',
-  ].join('\n'),
+  description: 'list current directory',
+  handler: () => {
+    const entries = Object.entries(listCwd());
+    if (!entries.length) return '  (empty)';
+
+    const lines = entries.map(([name, node]) => {
+      const label = node.type === 'dir' ? `${name}/` : name;
+      if (node.locked) {
+        return `  ${label.padEnd(COL_WIDTH)}[signal lost]`;
+      }
+      return node.description
+        ? `  ${label.padEnd(COL_WIDTH)}${node.description}`
+        : `  ${label}`;
+    });
+
+    return lines.join('\n');
+  },
 };

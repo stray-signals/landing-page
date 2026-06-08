@@ -1,12 +1,4 @@
-// ── Update this whenever Stray's situation changes ─────────────────
-// Set listening: null to hide that line entirely.
-export const STATUS = {
-  mood:      'wandering',
-  doing:     'building this terminal. it\'s not done yet.',
-  listening: null,
-  last_seen: 'the woods between signals',
-};
-// ───────────────────────────────────────────────────────────────────
+import { STATUS } from '../status.data.js';
 
 export default {
   name:        'status',

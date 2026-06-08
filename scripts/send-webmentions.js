@@ -6,7 +6,7 @@
 const fs   = require('fs');
 const path = require('path');
 
-const LOG_PATH  = path.join(__dirname, '..', 'transmissions', 'log.json');
+const LOG_PATH  = path.join(__dirname, '..', 'root', 'transmissions', 'log.json');
 const SITE_BASE = 'https://straysignals.dev';
 
 // ── Endpoint discovery ─────────────────────────────────────────────

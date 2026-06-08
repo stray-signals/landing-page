@@ -23,10 +23,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet transmissions/log.json; then
+          if git diff --quiet root/transmissions/log.json; then
             echo "No changes to log.json, nothing to commit."
           else
-            git add transmissions/log.json
+            git add root/transmissions/log.json
             git commit -m "chore: update signal_status after webmention dispatch"
             git push
           fi

@@ -4,6 +4,14 @@ const WEBMENTION_TOKEN  = 't_NSa5SYEaAXu6tqCq5A3w';
 const WEBMENTION_DOMAIN = 'straysignals.dev';
 // ─────────────────────────────────────────────────────────────────
 
+const TYPE_LABEL = {
+  'in-reply-to':  'reply',
+  'like-of':      'like',
+  'repost-of':    'repost',
+  'bookmark-of':  'bookmark',
+  'mention-of':   'mention',
+};
+
 export default {
   name:        'mentions',
   description: 'show incoming transmissions from across the web',
@@ -17,18 +25,20 @@ export default {
 
     if (!mentions.length) return 'no transmissions received. the void is quiet.';
 
-    const lines = [`${mentions.length} incoming transmission${mentions.length > 1 ? 's' : ''}:`, ''];
-    mentions.forEach(m => {
-      const from   = m.author?.name ?? m.url ?? 'unknown origin';
-      const source = m.url ?? '';
-      const type   = (m['wm-property'] ?? 'mention').replace('-of', '').replace('in-', '');
+    const blocks = mentions.map(m => {
+      const author = m.author?.name ?? m.author?.url ?? 'unknown';
+      const type   = TYPE_LABEL[m['wm-property']] ?? 'mention';
       const text   = m.content?.text
-        ? ` - "${m.content.text.slice(0, 80)}${m.content.text.length > 80 ? '...' : ''}"`
-        : '';
-      lines.push(`[${type}] ${from}${text}`);
-      if (source) lines.push(`        ${source}`);
+        ? `"${m.content.text.slice(0, 120)}${m.content.text.length > 120 ? '...' : ''}"`
+        : null;
+      const source = m.url ?? null;
+
+      const lines = [`@${author} [${type}]`];
+      if (text)   lines.push(text);
+      if (source) lines.push(`↳ ${source}`);
+      return lines.join('\n');
     });
 
-    return lines.join('\n');
+    return `${mentions.length} incoming transmission${mentions.length > 1 ? 's' : ''}:\n\n${blocks.join('\n\n')}`;
   },
 };

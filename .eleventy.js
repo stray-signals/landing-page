@@ -11,8 +11,8 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("avatar");
   eleventyConfig.addPassthroughCopy("js");
   eleventyConfig.addPassthroughCopy("terminal");
-  eleventyConfig.addPassthroughCopy("media");
-  eleventyConfig.addPassthroughCopy("transmissions/log.json");
+  eleventyConfig.addPassthroughCopy("root/media");
+  eleventyConfig.addPassthroughCopy("root/transmissions/log.json");
   eleventyConfig.addPassthroughCopy("CNAME");
 
   // Main site HTML - pass through, don't process as templates

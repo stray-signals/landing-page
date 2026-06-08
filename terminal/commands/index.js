@@ -4,26 +4,26 @@
 //   2. Import it below and add it to the commands array
 // ──────────────────────────────────────────────────────────────────
 
-import whoami   from './whoami.js';
+import whois    from './whois.js';
 import status   from './status.js';
 import ls       from './ls.js';
+import cd       from './cd.js';
 import cat      from './cat.js';
 import tail     from './tail.js';
 import freq     from './freq.js';
-import contact  from './contact.js';
-import msg      from './msg.js';
+import transmit from './transmit.js';
 import mentions from './mentions.js';
 import clear    from './clear.js';
 
 const commands = [
-  whoami,
+  whois,
   status,
   ls,
+  cd,
   cat,
   tail,
   freq,
-  contact,
-  msg,
+  transmit,
   mentions,
   clear,
 ];

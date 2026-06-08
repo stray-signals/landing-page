@@ -5,7 +5,7 @@ const TRACKS = [
   {
     id:    'field_log_0001',
     label: 'field_log_0001_rain_on_canvas.mp3',
-    src:   'media/field_log_0001_rain_on_canvas.mp3',
+    src:   'root/media/field_log_0001_rain_on_canvas.mp3',
     loop:  true,
   },
 ];
@@ -13,10 +13,13 @@ const TRACKS = [
 let audio = null;
 let currentTrack = null;
 
+export function getTrack(trackId) {
+  return trackId ? TRACKS.find(t => t.id === trackId) ?? null : TRACKS[0];
+}
+
 export function play(trackId) {
-  const track = trackId
-    ? TRACKS.find(t => t.id === trackId) ?? TRACKS[0]
-    : TRACKS[0];
+  const track = getTrack(trackId);
+  if (!track) return null;
 
   // Same track already loaded - resume if paused
   if (currentTrack?.id === track.id && audio) {

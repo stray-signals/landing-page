@@ -1,35 +1,28 @@
-import { formatLogEntry } from './_utils.js';
+import { formatLogEntry, resolveFile, fetchLogEntries } from './_utils.js';
 
 export default {
   name:        'cat',
-  description: 'read a log file',
-  usage:       'cat transmissions.log [| grep <type>]',
+  description: 'read a file',
+  usage:       'cat <file> [| grep <type>]',
   handler: async (args) => {
-    const [file, ...rest] = args.split('|').map(s => s.trim());
+    const [fileArg, ...rest] = args.split('|').map(s => s.trim());
     const grepMatch = rest[0]?.match(/^grep\s+(\S+)$/);
     const filter    = grepMatch?.[1] ?? null;
 
-    if (file !== 'transmissions.log') {
-      return `cat: ${file || '?'}: no such file in this signal`;
-    }
+    const { node, error } = resolveFile(fileArg);
+    if (error) return `cat: ${error}`;
 
-    const res = await fetch('transmissions/log.json');
-    if (!res.ok) return 'log corrupted. could not read.';
+    const entries = await fetchLogEntries(node);
+    if (!entries) return 'log corrupted. could not read.';
 
-    let entries = (await res.json())
-      .sort((a, b) => b.date.localeCompare(a.date));
+    const filtered = filter
+      ? entries.filter(e => e.type === filter || e.signal_status === filter)
+      : entries;
 
-    if (filter) {
-      entries = entries.filter(e =>
-        e.type === filter ||
-        (filter === 'signal' && e.signal_sent)
-      );
-    }
-
-    if (!entries.length) return filter
+    if (!filtered.length) return filter
       ? `no entries matching [${filter}].`
       : 'log is empty.';
 
-    return entries.map(formatLogEntry).join('\n\n');
+    return filtered.map(formatLogEntry).join('\n\n');
   },
 };
