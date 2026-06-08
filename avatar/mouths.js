@@ -1,6 +1,6 @@
 import { blankRow, normalizeRows, padRowCount } from './expression.helper.js';
 
-const MOUTH_MAX_ROW_COUNT = 14;
+const MOUTH_MAX_ROW_COUNT = 12;
 
 const mouths = {
   flat: {
