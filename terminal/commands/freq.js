@@ -1,4 +1,4 @@
-import { play, stop, isPlaying, getNowPlaying, getTrack } from '../../js/player.js';
+import { play, stop, isPlaying, getNowPlaying, getTrack } from '../../scripts/player.js';
 
 export default {
   name:        'freq',

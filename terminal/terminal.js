@@ -2,7 +2,7 @@ import { REGISTRY }                                    from './commands/index.js
 import { addMessage, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
 import { getInputMode, startTransmitMode, exitMessageMode, submitMessage }    from './terminal.input.js';
 import { resetIdleTimer }                              from '../avatar/avatar.js';
-import { getTimeBlock, TIME_BLOCKS }                   from '../js/time.js';
+import { getTimeBlock, TIME_BLOCKS }                   from '../scripts/time.js';
 import { getCwdString }                                from './terminal.fs.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];

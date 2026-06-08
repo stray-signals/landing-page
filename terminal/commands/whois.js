@@ -1,4 +1,4 @@
-import { getTimeBlock, TIME_BLOCKS } from '../../js/time.js';
+import { getTimeBlock, TIME_BLOCKS } from '../../scripts/time.js';
 
 const ENTITIES = {
   stray: () => {

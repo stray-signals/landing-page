@@ -1,4 +1,4 @@
-import { listTracks } from '../js/player.js';
+import { listTracks } from '../scripts/player.js';
 
 // ── Virtual filesystem ─────────────────────────────────────────────
 // Each node: { type, description?, locked?, children?, listFn? }

@@ -1,5 +1,5 @@
 import { showExpression, showFace } from './expression.builder.js';
-import { getTimeBlock } from '../js/time.js';
+import { getTimeBlock } from '../scripts/time.js';
 
 const canvas = document.getElementById('pixelFaceCanvas');
 const IS_DEEP = getTimeBlock() === 'deep';

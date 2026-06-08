@@ -9,7 +9,7 @@ module.exports = function(eleventyConfig) {
   // Static assets - copied straight through, no processing
   eleventyConfig.addPassthroughCopy("css");
   eleventyConfig.addPassthroughCopy("avatar");
-  eleventyConfig.addPassthroughCopy("js");
+  eleventyConfig.addPassthroughCopy("scripts");
   eleventyConfig.addPassthroughCopy("terminal");
   eleventyConfig.addPassthroughCopy("root/media");
   eleventyConfig.addPassthroughCopy("root/transmissions/log.json");
