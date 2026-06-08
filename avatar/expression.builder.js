@@ -2,8 +2,14 @@ import { getEyes } from './eyes.js';
 import { getMouth } from './mouths.js';
 import { getFace } from './fullFace.js';
 
-const canvas = document.getElementById('pixelFaceCanvas');
-const ctx = canvas.getContext('2d');
+let ctx = null;
+function getCtx() {
+  if (!ctx) {
+    const canvas = document.getElementById('pixelFaceCanvas');
+    if (canvas) ctx = canvas.getContext('2d');
+  }
+  return ctx;
+}
 
 const ROWS = 32;
 const COLS = 64;
@@ -12,23 +18,17 @@ const CELL_H = 16;
 const BG_COLOR = '#0b1f0a';
 const ON_COLOR = '#b8ffa0';
 
-function setPixel(col, row, alpha = 1) {
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = ON_COLOR;
-  ctx.fillRect(col * CELL_W, row * CELL_H, CELL_W, CELL_H);
-}
-
-function drawStatic() {
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = '#40ff40';
+function drawStatic(c) {
+  c.globalAlpha = 0.15;
+  c.fillStyle = '#40ff40';
   for (let i = 0; i < 800; i++) {
-    ctx.fillRect(
+    c.fillRect(
       Math.floor(Math.random() * 512),
       Math.floor(Math.random() * 512),
       1, 1
     );
   }
-  ctx.globalAlpha = 1;
+  c.globalAlpha = 1;
 }
 
 // Assemble a 32-row grid from eye + mouth components.
@@ -70,8 +70,10 @@ export function renderGrid(targetCtx, grid, cellW = CELL_W, cellH = CELL_H) {
 
 // Render any 32-row string array to the main canvas.
 export function drawExpression(grid) {
-  renderGrid(ctx, grid);
-  drawStatic();
+  const c = getCtx();
+  if (!c) return;
+  renderGrid(c, grid);
+  drawStatic(c);
 }
 
 // Convenience: build and draw in one call.
