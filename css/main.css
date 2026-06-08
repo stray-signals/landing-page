@@ -60,7 +60,8 @@ body {
   background: var(--color-bg);
   border: 2px solid var(--color-border);
   border-radius: 28px;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
+              inset 0 0 10px color-mix(in srgb, var(--color-bg) 60%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,8 +82,8 @@ body {
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(0, 255, 0, 0.03) 0px,
-    rgba(0, 255, 0, 0.03) 2px,
+    color-mix(in srgb, var(--color-primary) 3%, transparent) 0px,
+    color-mix(in srgb, var(--color-primary) 3%, transparent) 2px,
     transparent 2px,
     transparent 4px
   );
@@ -97,7 +98,7 @@ body {
   height: 100%;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
-  background: #030c03;
+  background: var(--color-bg);
   cursor: pointer;
 }
 
@@ -109,7 +110,8 @@ body {
   border: 2px solid var(--color-border);
   border-radius: 28px;
   padding: 1rem;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
+              inset 0 0 10px color-mix(in srgb, var(--color-bg) 60%, transparent);
   display: flex;
   flex-direction: column;
   height: auto;
@@ -142,7 +144,7 @@ body {
 .stray-msg {
   color: var(--color-primary);
   margin-left: 0.5rem;
-  border-left: 2px solid #3c7835;
+  border-left: 2px solid var(--color-accent);
   padding-left: 0.5rem;
 }
 
@@ -160,7 +162,7 @@ body {
 .command-editor::-webkit-scrollbar-thumb {
   background: var(--color-accent);
   border-radius: 0;
-  border: 1px solid #3c7835;
+  border: 1px solid var(--color-accent);
 }
 .command-history::-webkit-scrollbar-thumb:hover,
 .command-editor::-webkit-scrollbar-thumb:hover {
