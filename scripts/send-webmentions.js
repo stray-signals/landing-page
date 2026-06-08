@@ -61,7 +61,7 @@ async function main() {
     try {
       const endpoint = await findEndpoint(target);
       if (!endpoint) {
-        console.log('   no webmention endpoint found — skipping');
+        console.log('   no webmention endpoint found - skipping');
         continue;
       }
       console.log(`   endpoint: ${endpoint}`);

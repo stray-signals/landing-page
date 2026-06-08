@@ -44,7 +44,7 @@ jobs:
         id: deployment
 
   # Check whether log.json was touched in this push.
-  # If not, skip the webmentions job entirely — saves Actions minutes.
+  # If not, skip the webmentions job entirely - saves Actions minutes.
   check-log:
     runs-on: ubuntu-latest
     if: "!startsWith(github.event.head_commit.message, 'chore: update signal_sent')"

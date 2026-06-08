@@ -1,4 +1,4 @@
-// Time blocks — divide the day into four signal states.
+// Time blocks - divide the day into four signal states.
 // Import getTimeBlock() anywhere you need time-aware behaviour.
 
 export function getTimeBlock() {
@@ -21,7 +21,7 @@ export const TIME_BLOCKS = {
       'stray is drifting. transmissions may be slow.',
       'type "help" if you\'re lost.',
     ],
-    whoami: "StraySignal — lost in the deep hours. the signal is thin. i'm still here, somewhere between the static.",
+    whoami: "StraySignal - lost in the deep hours. the signal is thin. i'm still here, somewhere between the static.",
   },
 
   // 06:00 – 11:59  |  coming online
@@ -33,7 +33,7 @@ export const TIME_BLOCKS = {
       'stray is coming online.',
       'type "help" to see what\'s available.',
     ],
-    whoami: "StraySignal — just waking up. coder, wanderer, void worshiper. the signal is still finding its shape.",
+    whoami: "StraySignal - just waking up. coder, wanderer, void worshiper. the signal is still finding its shape.",
   },
 
   // 12:00 – 17:59  |  full signal
@@ -42,10 +42,10 @@ export const TIME_BLOCKS = {
     defaultExpression: 'neutral',
     greeting: [
       'connection established.',
-      'you\'ve reached straysignals.dev — the space between signals.',
+      'you\'ve reached straysignals.dev - the space between signals.',
       'type "help" to begin.',
     ],
-    whoami: "StraySignal — begin transmission // coder, wanderer, void worshiper. I haunt these woods and the space between signals.",
+    whoami: "StraySignal - begin transmission // coder, wanderer, void worshiper. I haunt these woods and the space between signals.",
   },
 
   // 18:00 – 23:59  |  signal fading
@@ -57,7 +57,7 @@ export const TIME_BLOCKS = {
       'stray is still around. winding down.',
       'type "help" if you need something.',
     ],
-    whoami: "StraySignal — signal fading but still transmitting. coder, wanderer, haunter of the late hours.",
+    whoami: "StraySignal - signal fading but still transmitting. coder, wanderer, haunter of the late hours.",
   },
 
 };

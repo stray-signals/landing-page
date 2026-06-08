@@ -21,9 +21,9 @@ export function normalizeRows(data, offset = 0) {
 }
 
 // Pad a row array to maxRows with blankRows.
-//   'top'    — padding goes before the data  (eyes)
-//   'bottom' — padding goes after the data   (mouths)
-//   'split'  — split evenly, uneven leans bottom (faces)
+//   'top'    - padding goes before the data  (eyes)
+//   'bottom' - padding goes after the data   (mouths)
+//   'split'  - split evenly, uneven leans bottom (faces)
 export function padRowCount(data, maxRows, position = 'split') {
   const padding = Math.max(0, maxRows - data.length);
 

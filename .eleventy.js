@@ -6,7 +6,7 @@ module.exports = function(eleventyConfig) {
   });
 
 
-  // Static assets — copied straight through, no processing
+  // Static assets - copied straight through, no processing
   eleventyConfig.addPassthroughCopy("css");
   eleventyConfig.addPassthroughCopy("avatar");
   eleventyConfig.addPassthroughCopy("js");
@@ -15,7 +15,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("transmissions/log.json");
   eleventyConfig.addPassthroughCopy("CNAME");
 
-  // Main site HTML — pass through, don't process as templates
+  // Main site HTML - pass through, don't process as templates
   eleventyConfig.ignores.add("index.html");
   eleventyConfig.ignores.add("404.html");
   eleventyConfig.ignores.add("spritesheet.html");

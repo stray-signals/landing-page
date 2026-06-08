@@ -1,4 +1,4 @@
-// Audio player — swap `src` for a Jellyfin stream URL when you're ready.
+// Audio player - swap `src` for a Jellyfin stream URL when you're ready.
 // e.g. src: 'https://your-jellyfin.home/Audio/{itemId}/stream?api_key=...'
 
 const TRACKS = [
@@ -18,7 +18,7 @@ export function play(trackId) {
     ? TRACKS.find(t => t.id === trackId) ?? TRACKS[0]
     : TRACKS[0];
 
-  // Same track already loaded — resume if paused
+  // Same track already loaded - resume if paused
   if (currentTrack?.id === track.id && audio) {
     if (audio.paused) {
       audio.play().catch(() => {});

@@ -1,5 +1,5 @@
 // ── Webmention.io config ──────────────────────────────────────────
-// Read-only token — safe in client-side JS.
+// Read-only token - safe in client-side JS.
 const WEBMENTION_TOKEN  = 't_NSa5SYEaAXu6tqCq5A3w';
 const WEBMENTION_DOMAIN = 'straysignals.dev';
 // ─────────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ export default {
       const source = m.url ?? '';
       const type   = (m['wm-property'] ?? 'mention').replace('-of', '').replace('in-', '');
       const text   = m.content?.text
-        ? ` — "${m.content.text.slice(0, 80)}${m.content.text.length > 80 ? '...' : ''}"`
+        ? ` - "${m.content.text.slice(0, 80)}${m.content.text.length > 80 ? '...' : ''}"`
         : '';
       lines.push(`[${type}] ${from}${text}`);
       if (source) lines.push(`        ${source}`);
