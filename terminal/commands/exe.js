@@ -13,8 +13,8 @@ export default {
       return `exe: unknown project "${id}"\navailable: ${available}`;
     }
 
-    const url = project.url + '?ref=terminal';
-    window.location.href = url;
+    sessionStorage.setItem('stray_ref', 'terminal');
+    window.location.href = project.url;
     return `launching ${project.label}...`;
   },
 };

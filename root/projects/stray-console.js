@@ -5,14 +5,8 @@
 const GREEN = 'color: #7fff7f; font-weight: bold';
 
 export function runConsole(terminalMessages, directMessages) {
-  const params = new URLSearchParams(window.location.search);
-  const fromTerminal = params.get('ref') === 'terminal';
-
-  // Strip ?ref=terminal from the address bar
-  if (fromTerminal) {
-    const clean = window.location.pathname + window.location.hash;
-    history.replaceState(null, '', clean);
-  }
+  const fromTerminal = sessionStorage.getItem('stray_ref') === 'terminal';
+  sessionStorage.removeItem('stray_ref');
 
   const messages = fromTerminal ? terminalMessages : directMessages;
 
