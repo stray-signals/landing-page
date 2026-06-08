@@ -155,9 +155,9 @@ body {
 
 .input-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   border-top: 1px solid #2f4f2f;
   padding-top: 0.8rem;
   margin-top: 0.5rem;
@@ -169,6 +169,8 @@ body {
   color: #b8ffa0;
   font-weight: bold;
   white-space: nowrap;
+  padding-top: 0.1rem;
+  flex-shrink: 0;
 }
 
 .command-editor {
@@ -179,21 +181,43 @@ body {
   font-size: 1rem;
   outline: none;
   flex: 1;
-  min-width: 120px;
+  min-width: 0;
   position: relative;
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  max-height: calc(1.4rem * 5);
+  overflow-y: auto;
   caret-color: transparent;
+}
+
+.command-editor::-webkit-scrollbar {
+  width: 8px;
+}
+.command-editor::-webkit-scrollbar-track {
+  background: #0c100c;
+  border-left: 1px solid #2f4f2f;
+}
+.command-editor::-webkit-scrollbar-thumb {
+  background: #6cb03e;
+  border-radius: 0;
+  border: 1px solid #3c7835;
+}
+.command-editor::-webkit-scrollbar-thumb:hover {
+  background: #8fdf5a;
 }
 
 .editable-area {
   display: inline;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
   outline: none;
   background: transparent;
   color: #b8e4a0;
   font-family: inherit;
   font-size: inherit;
+  flex: 1;
+  min-width: 0;
 }
 
 .block-cursor {
