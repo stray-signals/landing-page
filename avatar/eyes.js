@@ -1,6 +1,6 @@
 import { blankRow, normalizeRows, padRowCount } from './expression.helper.js';
 
-const EYE_MAX_ROW_COUNT = 14;
+const EYE_MAX_ROW_COUNT = 18;
 
 const eyes = {
   normal: {
