@@ -29,7 +29,7 @@ const filesystem = {
           listTracks().map(t => [t.label, {
             type:        'file',
             kind:        'audio',
-            description: `freq ${t.id}`,
+            description: t.description ?? null,
             id:          t.id,
           }])
         );
