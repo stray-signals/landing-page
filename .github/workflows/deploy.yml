@@ -64,7 +64,9 @@ jobs:
 
       - id: diff
         run: |
-          if git diff --name-only HEAD~1 HEAD | grep -q 'transmissions/log.json'; then
+          if [ "${{ inputs.force_webmentions }}" == "true" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          elif git diff --name-only HEAD~1 HEAD | grep -q 'transmissions/log.json'; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -73,7 +75,7 @@ jobs:
   webmentions:
     runs-on: ubuntu-latest
     needs: [deploy, check-log]
-    if: needs.check-log.outputs.changed == 'true' || inputs.force_webmentions == 'true'
+    if: needs.check-log.outputs.changed == 'true'
     permissions:
       contents: write
     steps:
