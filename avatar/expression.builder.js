@@ -1,6 +1,6 @@
 import { getEyes } from './eyes.js';
 import { getMouth } from './mouths.js';
-import { getFace } from './fullFace.js';
+import { getFace }  from './fullFace.js';
 
 let ctx = null;
 function getCtx() {
@@ -11,40 +11,44 @@ function getCtx() {
   return ctx;
 }
 
-const ROWS = 32;
-const COLS = 64;
+const ROWS   = 32;
+const COLS   = 64;
 const CELL_W = 8;
 const CELL_H = 16;
-const BG_COLOR = '#0b1f0a';
-const ON_COLOR = '#b8ffa0';
+
+function themeColors() {
+  const s = getComputedStyle(document.documentElement);
+  return {
+    ON_COLOR: s.getPropertyValue('--color-primary').trim() || '#b8ffa0',
+    BG_COLOR: s.getPropertyValue('--color-bg').trim()      || '#0b1f0a',
+  };
+}
 
 function drawStatic(c) {
+  const { ON_COLOR } = themeColors();
   c.globalAlpha = 0.15;
-  c.fillStyle = '#40ff40';
+  c.fillStyle = ON_COLOR;
   for (let i = 0; i < 800; i++) {
-    c.fillRect(
-      Math.floor(Math.random() * 512),
-      Math.floor(Math.random() * 512),
-      1, 1
-    );
+    c.fillRect(Math.floor(Math.random() * 512), Math.floor(Math.random() * 512), 1, 1);
   }
   c.globalAlpha = 1;
 }
 
 // Assemble a 32-row grid from eye + mouth components.
 export function buildExpression(eyeID, mouthID, eyeOffset = 0, mouthOffset = 0) {
-  const eyes  = getEyes(eyeID, eyeOffset);   // 14 rows, padded to top
-  const mouth = getMouth(mouthID, mouthOffset); // 18 rows, padded to bottom
-  return [...eyes, ...mouth];                 // exactly 32 rows
+  const eyes  = getEyes(eyeID, eyeOffset);
+  const mouth = getMouth(mouthID, mouthOffset);
+  return [...eyes, ...mouth];
 }
 
 // Use a full-face override instead of components.
 export function buildFace(faceID) {
-  return getFace(faceID); // 32 rows, split-padded
+  return getFace(faceID);
 }
 
 // Render any 32-row string array into an arbitrary context at given cell size.
 export function renderGrid(targetCtx, grid, cellW = CELL_W, cellH = CELL_H) {
+  const { ON_COLOR, BG_COLOR } = themeColors();
   const w = cellW * COLS;
   const h = cellH * ROWS;
 
@@ -64,7 +68,6 @@ export function renderGrid(targetCtx, grid, cellW = CELL_W, cellH = CELL_H) {
       }
     }
   }
-
   targetCtx.globalAlpha = 1;
 }
 
@@ -76,7 +79,6 @@ export function drawExpression(grid) {
   drawStatic(c);
 }
 
-// Convenience: build and draw in one call.
 export function showExpression(eyeID, mouthID, eyeOffset = 0, mouthOffset = 0) {
   drawExpression(buildExpression(eyeID, mouthID, eyeOffset, mouthOffset));
 }

@@ -1,8 +1,11 @@
+import { currentHex } from './theme.js';
+
 export default {
   name:        'spritesheet',
   description: 'open expression spritesheet',
   handler: () => {
-    window.open('/spritesheet.html', '_blank', 'width=1200,height=800,noopener');
+    const color = encodeURIComponent(currentHex);
+    window.open(`/spritesheet.html?color=${color}`, '_blank', 'width=1200,height=800,noopener');
     return 'opening spritesheet...';
   },
 };

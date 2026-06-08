@@ -1,10 +1,13 @@
-import logCmd    from './log.js';
-import spritesheet from './spritesheet.js';
-import theme       from './theme.js';
+import { REGISTRY }   from '../../commands/index.js';
+import logCmd         from './log.js';
+import spritesheet    from './spritesheet.js';
+import theme          from './theme.js';
 
 const adminCommands = [logCmd, spritesheet, theme];
 
-export const ADMIN_REGISTRY = new Map(adminCommands.map(cmd => [cmd.name, cmd]));
+// Start with all public commands, then layer in admin-only ones
+export const ADMIN_REGISTRY = new Map(REGISTRY);
+for (const cmd of adminCommands) ADMIN_REGISTRY.set(cmd.name, cmd);
 
 ADMIN_REGISTRY.set('logout', {
   name:        'logout',
