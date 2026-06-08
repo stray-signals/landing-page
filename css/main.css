@@ -1,3 +1,13 @@
+:root {
+  --color-primary:    #b8ffa0;
+  --color-primary-dim:#b8e4a0;
+  --color-bg:         #0c100c;
+  --color-border:     #2f4f2f;
+  --color-accent:     #6cb03e;
+  --color-accent-hi:  #8fdf5a;
+  --color-text-blue:  #a0c0e0;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -47,8 +57,8 @@ body {
   flex: 1;
   min-width: 200px;
   aspect-ratio: 1 / 1;
-  background: #0c100c;
-  border: 2px solid #2f4f2f;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
   border-radius: 28px;
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
   display: flex;
@@ -95,8 +105,8 @@ body {
 .terminal-panel {
   flex: 1.5;
   min-width: 260px;
-  background: #0c100c;
-  border: 2px solid #2f4f2f;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
   border-radius: 28px;
   padding: 1rem;
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 20, 0, 0.6);
@@ -118,7 +128,7 @@ body {
 }
 
 .history-entry {
-  color: #b8e4a0;
+  color: var(--color-primary-dim);
   font-size: 0.9rem;
   line-height: 1.4;
   word-break: break-word;
@@ -126,31 +136,35 @@ body {
 }
 
 .visitor-msg {
-  color: #a0c0e0;
+  color: var(--color-text-blue);
 }
 
 .stray-msg {
-  color: #b8ffa0;
+  color: var(--color-primary);
   margin-left: 0.5rem;
   border-left: 2px solid #3c7835;
   padding-left: 0.5rem;
 }
 
 /* PIXEL-STYLE SCROLLBAR */
-.command-history::-webkit-scrollbar {
+.command-history::-webkit-scrollbar,
+.command-editor::-webkit-scrollbar {
   width: 8px;
 }
-.command-history::-webkit-scrollbar-track {
-  background: #0c100c;
-  border-left: 1px solid #2f4f2f;
+.command-history::-webkit-scrollbar-track,
+.command-editor::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-border);
 }
-.command-history::-webkit-scrollbar-thumb {
-  background: #6cb03e;
+.command-history::-webkit-scrollbar-thumb,
+.command-editor::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
   border-radius: 0;
   border: 1px solid #3c7835;
 }
-.command-history::-webkit-scrollbar-thumb:hover {
-  background: #8fdf5a;
+.command-history::-webkit-scrollbar-thumb:hover,
+.command-editor::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-hi);
 }
 
 .input-line {
@@ -158,7 +172,7 @@ body {
   align-items: flex-start;
   gap: 0.5rem;
   flex-wrap: nowrap;
-  border-top: 1px solid #2f4f2f;
+  border-top: 1px solid var(--color-border);
   padding-top: 0.8rem;
   margin-top: 0.5rem;
   font-family: inherit;
@@ -166,7 +180,7 @@ body {
 }
 
 .input-prompt {
-  color: #b8ffa0;
+  color: var(--color-primary);
   font-weight: bold;
   white-space: nowrap;
   padding-top: 0.1rem;
@@ -176,7 +190,7 @@ body {
 .command-editor {
   background: transparent;
   border: none;
-  color: #b8e4a0;
+  color: var(--color-primary-dim);
   font-family: 'Courier New', 'Fira Code', monospace;
   font-size: 1rem;
   outline: none;
@@ -189,29 +203,13 @@ body {
   word-break: break-all;
 }
 
-.command-editor::-webkit-scrollbar {
-  width: 8px;
-}
-.command-editor::-webkit-scrollbar-track {
-  background: #0c100c;
-  border-left: 1px solid #2f4f2f;
-}
-.command-editor::-webkit-scrollbar-thumb {
-  background: #6cb03e;
-  border-radius: 0;
-  border: 1px solid #3c7835;
-}
-.command-editor::-webkit-scrollbar-thumb:hover {
-  background: #8fdf5a;
-}
-
 .editable-area {
   display: inline;
   white-space: pre-wrap;
   word-break: break-all;
   outline: none;
   background: transparent;
-  color: #b8e4a0;
+  color: var(--color-primary-dim);
   font-family: inherit;
   font-size: inherit;
 }
@@ -220,7 +218,7 @@ body {
   display: inline-block;
   width: 0.6em;
   height: 1.2rem;
-  background-color: #b8e4a0;
+  background-color: var(--color-primary-dim);
   vertical-align: middle;
   margin-left: 2px;
   animation: blink 1s step-end infinite;
@@ -232,7 +230,116 @@ body {
   50% { opacity: 0; }
 }
 
+/* ── ADMIN MODE ───────────────────────────────────────────────────── */
+.dashboard.admin-mode .face-panel {
+  display: none;
+}
+.dashboard.admin-mode .terminal-panel {
+  flex: 1;
+  max-height: 85vh;
+}
 
+/* ── MODAL ────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  min-width: 320px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.15);
+  font-family: 'Courier New', 'Fira Code', monospace;
+  color: var(--color-primary);
+}
+
+.modal-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.6rem;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.modal-field label {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.modal-field input {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  color: var(--color-primary-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.modal-field input:focus {
+  border-color: var(--color-accent);
+}
+
+.modal-error {
+  font-size: 0.8rem;
+  color: #ff6b6b;
+  margin-bottom: 0.8rem;
+  min-height: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.modal-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.35rem 0.9rem;
+  color: var(--color-primary-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.modal-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.modal-btn.primary {
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.modal-btn.primary:hover {
+  background: rgba(108, 176, 62, 0.15);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────── */
 @media (max-width: 700px) {
   body {
     padding: 0.5rem;
@@ -254,7 +361,6 @@ body {
   .input-prompt, .editable-area {
     font-size: 0.85rem;
   }
-
 }
 
 @media (max-height: 600px) {
@@ -265,4 +371,3 @@ body {
     max-width: 180px;
   }
 }
-

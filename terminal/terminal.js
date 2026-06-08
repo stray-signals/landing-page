@@ -1,17 +1,50 @@
-import { REGISTRY }                                    from './commands/index.js';
+import { REGISTRY }                                          from './commands/index.js';
+import { ADMIN_REGISTRY }                                     from './admin/commands/index.js';
 import { addMessage, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
-import { getInputMode, startTransmitMode, exitMessageMode, submitMessage }    from './terminal.input.js';
-import { resetIdleTimer }                              from '../avatar/avatar.js';
-import { getTimeBlock, TIME_BLOCKS }                   from '../scripts/time.js';
-import { getCwdString }                                from './terminal.fs.js';
+import { getInputMode, startTransmitMode, exitMessageMode, submitMessage,
+         startWizard, handleWizardInput, cancelWizard }       from './terminal.input.js';
+import { resetIdleTimer }                                     from '../avatar/avatar.js';
+import { getTimeBlock, TIME_BLOCKS }                          from '../scripts/time.js';
+import { getCwdString }                                       from './terminal.fs.js';
+import { storePat, clearPat }                                 from './admin/auth.js';
+import { LOG_WIZARD_STEPS, PAT_WIZARD_STEPS, submitLogEntry } from './admin/commands/log.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];
-const BASE_PROMPT = timeBlock.prompt; // e.g. 'stray@signal[drifting]:~$'
+const BASE_PROMPT = timeBlock.prompt;
+
+let isAdmin = false;
 
 function buildPrompt() {
-  const path = getCwdString(); // '~' or '~/logs'
+  const path = getCwdString();
   return BASE_PROMPT.replace(':~$', `:${path}$`);
 }
+
+function getRegistry() {
+  return isAdmin ? ADMIN_REGISTRY : REGISTRY;
+}
+
+// ── Admin mode ─────────────────────────────────────────────────────
+const dashboard = document.querySelector('.dashboard');
+
+function activateAdmin() {
+  isAdmin = true;
+  dashboard.classList.add('admin-mode');
+  promptEl.textContent = 'root@signal:~$';
+  addMessage('stray', 'admin mode active. type "help" for commands.');
+}
+
+function deactivateAdmin() {
+  isAdmin = false;
+  clearPat();
+  dashboard.classList.remove('admin-mode');
+  promptEl.textContent = buildPrompt();
+  addMessage('stray', 'logged out.');
+}
+
+document.addEventListener('terminal:adminlogin', () => {
+  activateAdmin();
+  editableSpan.focus();
+});
 
 // ── Command dispatch ───────────────────────────────────────────────
 async function processCommand(input) {
@@ -21,7 +54,7 @@ async function processCommand(input) {
   const [name, ...rest] = trimmed.toLowerCase().split(/\s+/);
   const args = rest.join(' ');
 
-  const command = REGISTRY.get(name);
+  const command = getRegistry().get(name);
   if (!command) {
     document.dispatchEvent(new CustomEvent('avatar:unknowncommand'));
     addMessage('stray', `command not recognized: "${name}". try "help".`);
@@ -32,23 +65,39 @@ async function processCommand(input) {
 
   if (result instanceof Promise) {
     addMessage('stray', 'scanning...');
-    try {
-      result = await result;
-    } catch {
-      addMessage('stray', 'signal lost. try again.');
-      return;
-    }
+    try { result = await result; }
+    catch { addMessage('stray', 'signal lost. try again.'); return; }
   }
 
-  if (result?.action === 'clear')         { document.getElementById('commandHistory').innerHTML = ''; }
+  if (result?.action === 'clear')          { document.getElementById('commandHistory').innerHTML = ''; }
   else if (result?.action === 'startTransmit') { startTransmitMode(); }
-  else if (result?.action === 'cd')       { promptEl.textContent = buildPrompt(); }
-  else if (typeof result === 'string')    { addMessage('stray', result); }
+  else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
+  else if (result?.action === 'logout')    { deactivateAdmin(); }
+  else if (result?.action === 'startWizard') { handleWizardAction(result.wizard); }
+  else if (typeof result === 'string')     { addMessage('stray', result); }
+}
+
+function handleWizardAction(wizard) {
+  if (wizard === 'pat') {
+    startWizard(PAT_WIZARD_STEPS, ({ pat }) => {
+      storePat(pat);
+      addMessage('stray', 'pat stored for session.');
+      // Continue into log wizard
+      startWizard(LOG_WIZARD_STEPS, (data) => submitLogEntry(data, addMessage));
+    });
+  } else if (wizard === 'log') {
+    startWizard(LOG_WIZARD_STEPS, (data) => submitLogEntry(data, addMessage));
+  }
 }
 
 // ── Input handling ─────────────────────────────────────────────────
 editableSpan.addEventListener('keydown', async (e) => {
   resetIdleTimer();
+
+  if (e.key === 'Escape') {
+    if (getInputMode() === 'wizard') { cancelWizard(); addMessage('stray', 'cancelled.'); }
+    return;
+  }
 
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -57,12 +106,13 @@ editableSpan.addEventListener('keydown', async (e) => {
     placeCaretAtEnd(editableSpan);
 
     if (getInputMode() === 'message') {
-      if (text.trim()) {
-        await submitMessage(text.trim());
-      } else {
-        addMessage('stray', 'transmission cancelled.');
-        exitMessageMode();
-      }
+      if (text.trim()) { await submitMessage(text.trim()); }
+      else { addMessage('stray', 'transmission cancelled.'); exitMessageMode(); }
+      return;
+    }
+
+    if (getInputMode() === 'wizard') {
+      handleWizardInput(text);
       return;
     }
 
@@ -77,9 +127,7 @@ editableSpan.addEventListener('keydown', async (e) => {
 
 terminalPanel.addEventListener('click', (e) => {
   resetIdleTimer();
-  if (e.target !== editableSpan && !editableSpan.contains(e.target)) {
-    placeCaretAtEnd(editableSpan);
-  }
+  if (e.target !== editableSpan && !editableSpan.contains(e.target)) placeCaretAtEnd(editableSpan);
 });
 
 editableSpan.addEventListener('focus', () => { resetIdleTimer(); placeCaretAtEnd(editableSpan); });

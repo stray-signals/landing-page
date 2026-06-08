@@ -5,6 +5,7 @@
 // ──────────────────────────────────────────────────────────────────
 
 import whois    from './whois.js';
+import login    from './login.js';
 import status   from './status.js';
 import ls       from './ls.js';
 import cd       from './cd.js';
@@ -26,6 +27,7 @@ const commands = [
   transmit,
   mentions,
   clear,
+  login,
 ];
 
 export const REGISTRY = new Map(commands.map(cmd => [cmd.name, cmd]));
