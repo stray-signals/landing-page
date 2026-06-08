@@ -44,7 +44,7 @@ async function main() {
   const log = JSON.parse(fs.readFileSync(LOG_PATH, 'utf-8'));
   let changed = false;
 
-  const pending = log.filter(e => !e.signal_sent && e.url);
+  const pending = log.filter(e => e.url && e.signal_status !== 'sent');
   if (!pending.length) {
     console.log('No pending transmissions.');
     return;
@@ -61,17 +61,21 @@ async function main() {
     try {
       const endpoint = await findEndpoint(target);
       if (!endpoint) {
-        console.log('   no webmention endpoint found - skipping');
+        console.log('   no webmention endpoint found');
+        entry.signal_status = 'no_endpoint';
+        changed = true;
         continue;
       }
       console.log(`   endpoint: ${endpoint}`);
 
       const ok = await sendWebmention(source, target, endpoint);
       if (ok) {
-        entry.signal_sent = true;
+        entry.signal_status = 'sent';
         changed = true;
         console.log('   ✓ signal sent');
       } else {
+        entry.signal_status = 'failed';
+        changed = true;
         console.log('   ✗ endpoint rejected the webmention');
       }
     } catch (err) {
