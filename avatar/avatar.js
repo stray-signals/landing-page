@@ -1,23 +1,28 @@
-import { showExpression, showFace } from './expression.builder.js';
+import { showExpression, showFace } from './expressions/expression.builder.js';
 import { getTimeBlock } from '../scripts/time.js';
+import { INTERACTIONS, INTERACTION_MAP } from './interactions/index.js';
 
-const canvas = document.getElementById('pixelFaceCanvas');
+const canvas  = document.getElementById('pixelFaceCanvas');
 const IS_DEEP = getTimeBlock() === 'deep';
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// ─── Expression helpers ───────────────────────────────────────────────────────
 
-let idleTimer10;
-let idleTimer30;
-let typingTimer;
-let loadingInterval;
+function show(eyes, mouth) {
+  showExpression(eyes, mouth);
+}
 
-let frustrationClicks = 0;
-let frustrationResetTimeout;
+function showInteraction(name) {
+  const i = INTERACTION_MAP.get(name);
+  if (!i) return;
+  if (i.face) showFace(i.face);
+  else        show(i.eyes, i.mouth);
+}
 
-// ─── Loading cycle (00–06 time block) ────────────────────────────────────────
+// ─── Default state ────────────────────────────────────────────────────────────
 
 const LOADING_FACES = ['loadingOne', 'loadingTwo', 'loadingThree', 'loadingFour'];
-let loadingIndex = 0;
+let loadingIndex    = 0;
+let loadingInterval = null;
 
 function startLoadingCycle() {
   showFace(LOADING_FACES[loadingIndex]);
@@ -32,13 +37,6 @@ function stopLoadingCycle() {
   loadingInterval = null;
 }
 
-// ─── Expression helpers ───────────────────────────────────────────────────────
-
-function show(eyes, mouth) {
-  showExpression(eyes, mouth);
-}
-
-// During deep hours the loading cycle IS the default state.
 function setDefault() {
   if (IS_DEEP) {
     startLoadingCycle();
@@ -47,12 +45,14 @@ function setDefault() {
   }
 }
 
-// Call before any interaction that needs to override the loading cycle.
 function pauseDefault() {
   if (IS_DEEP) stopLoadingCycle();
 }
 
 // ─── Idle timers ──────────────────────────────────────────────────────────────
+
+let idleTimer10;
+let idleTimer30;
 
 function clearIdleTimers() {
   clearTimeout(idleTimer10);
@@ -62,10 +62,10 @@ function clearIdleTimers() {
 function resetIdleTimers() {
   clearIdleTimers();
   idleTimer10 = setTimeout(() => {
-    show('unamused', 'flat');
+    showInteraction('idle-10');
     idleTimer30 = setTimeout(() => {
-      show('wozzy', null); // null mouth → empty rows via ?? []
-    }, 20000); // 20s after 10s = 30s total
+      showInteraction('idle-30');
+    }, 20000);
   }, 10000);
 }
 
@@ -73,70 +73,31 @@ export function resetIdleTimer() {
   resetIdleTimers();
 }
 
-// ─── Canvas interactions ──────────────────────────────────────────────────────
+// ─── Register interactions ────────────────────────────────────────────────────
+// Interactions with a handler factory call it to get a custom listener.
+// All others get the generic show → optional revert path.
 
-canvas.addEventListener('mouseenter', () => {
-  pauseDefault();
-  show('skeptical', 'flat');
-  resetIdleTimers();
-});
+const ctx = { show, showFace, setDefault, pauseDefault, resetIdleTimers };
 
-canvas.addEventListener('mouseleave', () => {
-  setDefault();
-  resetIdleTimers();
-});
+for (const interaction of INTERACTIONS) {
+  if (!interaction.trigger) continue;
 
-canvas.addEventListener('click', () => {
-  pauseDefault();
-  show('angry', 'tense');
-  frustrationClicks++;
+  const target   = interaction.trigger.on === 'canvas' ? canvas : document;
+  const listener = interaction.handler
+    ? interaction.handler(ctx)
+    : () => {
+        pauseDefault();
+        if (interaction.default) {
+          setDefault();
+        } else {
+          show(interaction.eyes, interaction.mouth);
+          if (interaction.revert) setTimeout(setDefault, interaction.revert);
+        }
+        resetIdleTimers();
+      };
 
-  clearTimeout(frustrationResetTimeout);
-
-  if (frustrationClicks >= 3) {
-    document.dispatchEvent(new CustomEvent('avatar:overtapped'));
-    frustrationClicks = 0;
-  }
-
-  frustrationResetTimeout = setTimeout(() => {
-    frustrationClicks = 0;
-    setDefault();
-  }, 1500);
-
-  resetIdleTimers();
-});
-
-// ─── Terminal interactions ────────────────────────────────────────────────────
-
-let talkFlicker = false;
-
-document.addEventListener('avatar:keydown', () => {
-  pauseDefault();
-  talkFlicker = !talkFlicker;
-  show('normal', talkFlicker ? 'talking' : 'flat');
-
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    talkFlicker = false;
-    setDefault();
-  }, 800);
-
-  resetIdleTimers();
-});
-
-document.addEventListener('avatar:submit', () => {
-  pauseDefault();
-  show('skeptical', 'flat');
-  setTimeout(setDefault, 600);
-  resetIdleTimers();
-});
-
-document.addEventListener('avatar:unknowncommand', () => {
-  pauseDefault();
-  show('glitched', 'tense');
-  setTimeout(setDefault, 900);
-  resetIdleTimers();
-});
+  target.addEventListener(interaction.trigger.event, listener);
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
