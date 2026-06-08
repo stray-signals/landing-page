@@ -1,5 +1,5 @@
 import { listTracks } from '../scripts/player.js';
-import { PROJECTS }  from '../projects/projects.data.js';
+import { PROJECTS }  from './projects.data.js';
 
 // ── Virtual filesystem ─────────────────────────────────────────────
 // Each node: { type, description?, locked?, children?, listFn? }
