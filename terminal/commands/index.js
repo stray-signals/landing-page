@@ -5,7 +5,7 @@
 // ──────────────────────────────────────────────────────────────────
 
 import whois    from './whois.js';
-import exe      from './exe.js';
+import run      from './run.js';
 import login    from './login.js';
 import status   from './status.js';
 import ls       from './ls.js';
@@ -19,7 +19,7 @@ import clear    from './clear.js';
 
 const commands = [
   whois,
-  exe,
+  run,
   status,
   ls,
   cd,

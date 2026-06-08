@@ -1,5 +1,5 @@
 export default {
   name:        'transmit',
-  description: 'leave a message for stray',
+  description: 'send a message',
   handler:     () => ({ action: 'startTransmit' }),
 };

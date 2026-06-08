@@ -14,7 +14,7 @@ const TYPE_LABEL = {
 
 export default {
   name:        'mentions',
-  description: 'show incoming transmissions from across the web',
+  description: 'show incoming transmissions',
   handler: async () => {
     const url = `https://webmention.io/api/mentions.jf2?domain=${WEBMENTION_DOMAIN}&token=${WEBMENTION_TOKEN}&per-page=10`;
     const res = await fetch(url);

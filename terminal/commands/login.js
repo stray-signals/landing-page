@@ -3,7 +3,7 @@ import { checkCredentials }      from '../admin/auth.js';
 
 export default {
   name:        'login',
-  description: 'access admin terminal',
+  description: 'access terminal configurations',
   handler: () => {
     showModal({
       title:  'identify yourself',

@@ -2,7 +2,7 @@ import { STATUS } from '../status.data.js';
 
 export default {
   name:        'status',
-  description: 'what stray is up to right now',
+  description: 'current diagnostics',
   handler: () => [
     `mood:      ${STATUS.mood}`,
     `doing:     ${STATUS.doing}`,

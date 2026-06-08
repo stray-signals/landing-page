@@ -1,6 +1,6 @@
 // ── Roam — F12 console messages ───────────────────────────────────
 // Edit these arrays to change what appears in the browser console.
-// terminal: shown when visitor arrives via exe roam (?ref=terminal)
+// terminal: shown when visitor arrives via run roam (?ref=terminal)
 // direct:   shown when visitor arrives any other way
 
 export const terminal = [

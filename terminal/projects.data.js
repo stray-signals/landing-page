@@ -1,6 +1,6 @@
 // ── Project data ───────────────────────────────────────────────────
 // Edit log[] to change what "cat projects/<id>/<id>.log" displays
-// in the terminal. url is where "exe <id>" redirects.
+// in the terminal. url is where "run <id>" redirects.
 
 export const PROJECTS = {
   pigeonhole: {
@@ -15,7 +15,7 @@ export const PROJECTS = {
       'took more out of me than expected. the face matching part especially.',
       'something about teaching a machine to recognize a face',
       'feels like it should cost more than it does.',
-      'run "exe pigeonhole" to open it.',
+      'run "run pigeonhole" to open it.',
     ],
   },
 
@@ -30,7 +30,7 @@ export const PROJECTS = {
       'there is a wren on it. she reacts to things.',
       'i understand that more than i expected to.',
       'this one cost something different.',
-      'run "exe roam" to open it.',
+      'run "run roam" to open it.',
     ],
   },
 };
