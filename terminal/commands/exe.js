@@ -1,4 +1,4 @@
-import { PROJECTS } from '../../root/projects/projects.data.js';
+import { PROJECTS } from '../../projects/projects.data.js';
 
 export default {
   name:        'exe',
