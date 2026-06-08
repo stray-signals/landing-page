@@ -16,14 +16,5 @@
     "url": "https://vibes.fish/",
     "copy": "the content is locked behind fish. i caught enough to open some doors. something was playing on the other side. i stayed longer than i expected.",
     "signal_status": "no_endpoint"
-  },
-  {
-    "id": "2026-06-08-test",
-    "type": "drift",
-    "date": "2026-06-08",
-    "target": "test",
-    "signal_status": "pending",
-    "url": "test.com",
-    "copy": "Testing functionality"
   }
 ]
