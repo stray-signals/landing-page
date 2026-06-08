@@ -14,7 +14,10 @@ export function showModal({ title, fields, onSubmit, onCancel }) {
     ${fields.map(f => `
       <div class="modal-field">
         <label>${f.label}</label>
-        <input type="${f.type ?? 'text'}" name="${f.name}" autocomplete="off" spellcheck="false" />
+        ${f.type === 'textarea'
+          ? `<textarea name="${f.name}" rows="${f.rows ?? 3}" autocomplete="off" spellcheck="false"></textarea>`
+          : `<input type="${f.type ?? 'text'}" name="${f.name}" autocomplete="off" spellcheck="false" />`
+        }
       </div>
     `).join('')}
     <div class="modal-error" id="modal-error"></div>

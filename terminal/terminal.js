@@ -1,13 +1,12 @@
 import { REGISTRY }                                          from './commands/index.js';
 import { ADMIN_REGISTRY }                                     from './admin/commands/index.js';
 import { addMessage, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
-import { getInputMode, startTransmitMode, exitMessageMode, submitMessage,
-         startWizard, handleWizardInput, cancelWizard }       from './terminal.input.js';
+import { getInputMode, startTransmitMode, exitMessageMode, submitMessage } from './terminal.input.js';
 import { resetIdleTimer }                                     from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS }                          from '../scripts/time.js';
 import { getCwdString }                                       from './terminal.fs.js';
-import { storePat, clearPat }                                 from './admin/auth.js';
-import { LOG_WIZARD_STEPS, PAT_WIZARD_STEPS, submitLogEntry } from './admin/commands/log.js';
+import { storePat, clearPat }   from './admin/auth.js';
+import { handleLog }            from './admin/commands/log.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];
 const BASE_PROMPT = timeBlock.prompt;
@@ -73,31 +72,13 @@ async function processCommand(input) {
   else if (result?.action === 'startTransmit') { startTransmitMode(); }
   else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
   else if (result?.action === 'logout')    { deactivateAdmin(); }
-  else if (result?.action === 'startWizard') { handleWizardAction(result.wizard); }
+  else if (result?.action === 'adminLog')  { handleLog(addMessage); }
   else if (typeof result === 'string')     { addMessage('stray', result); }
-}
-
-function handleWizardAction(wizard) {
-  if (wizard === 'pat') {
-    startWizard(PAT_WIZARD_STEPS, ({ pat }) => {
-      storePat(pat);
-      addMessage('stray', 'pat stored for session.');
-      // Continue into log wizard
-      startWizard(LOG_WIZARD_STEPS, (data) => submitLogEntry(data, addMessage));
-    });
-  } else if (wizard === 'log') {
-    startWizard(LOG_WIZARD_STEPS, (data) => submitLogEntry(data, addMessage));
-  }
 }
 
 // ── Input handling ─────────────────────────────────────────────────
 editableSpan.addEventListener('keydown', async (e) => {
   resetIdleTimer();
-
-  if (e.key === 'Escape') {
-    if (getInputMode() === 'wizard') { cancelWizard(); addMessage('stray', 'cancelled.'); }
-    return;
-  }
 
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -108,11 +89,6 @@ editableSpan.addEventListener('keydown', async (e) => {
     if (getInputMode() === 'message') {
       if (text.trim()) { await submitMessage(text.trim()); }
       else { addMessage('stray', 'transmission cancelled.'); exitMessageMode(); }
-      return;
-    }
-
-    if (getInputMode() === 'wizard') {
-      handleWizardInput(text);
       return;
     }
 

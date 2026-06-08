@@ -287,7 +287,8 @@ body {
   opacity: 0.6;
 }
 
-.modal-field input {
+.modal-field input,
+.modal-field textarea {
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -296,9 +297,12 @@ body {
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
+  resize: vertical;
+  width: 100%;
 }
 
-.modal-field input:focus {
+.modal-field input:focus,
+.modal-field textarea:focus {
   border-color: var(--color-accent);
 }
 
