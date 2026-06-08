@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>straysignals :: expression spritesheet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #060e05;
+      color: #b8ffa0;
+      font-family: monospace;
+      padding: 2rem;
+    }
+    h1 { font-size: 1rem; margin-bottom: 2rem; opacity: 0.5; letter-spacing: 0.1em; }
+    h2 { font-size: 0.8rem; margin: 2.5rem 0 1rem; opacity: 0.4; letter-spacing: 0.15em; text-transform: uppercase; }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cell canvas {
+      width: 256px;
+      height: 256px;
+      image-rendering: pixelated;
+    }
+    .label {
+      font-size: 0.65rem;
+      opacity: 0.4;
+      text-align: center;
+      max-width: 256px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>straysignals.dev :: expression spritesheet</h1>
+  <div id="root"></div>
+
+  <script type="module">
+    import { buildExpression, buildFace, renderGrid } from './avatar/expression.builder.js';
+    import { FACE_IDS } from './avatar/fullFace.js';
+    import { EYE_IDS } from './avatar/eyes.js';
+    import { MOUTH_IDS } from './avatar/mouths.js';
+
+    const CELL_W = 4; // 64 cols × 4px = 256px
+    const CELL_H = 8; // 32 rows × 8px = 256px
+    const root = document.getElementById('root');
+
+    function makeCanvas() {
+      const c = document.createElement('canvas');
+      c.width  = 256;
+      c.height = 256;
+      return c;
+    }
+
+    function makeCell(label) {
+      const cell  = document.createElement('div');
+      cell.className = 'cell';
+      const canvas = makeCanvas();
+      const lbl   = document.createElement('div');
+      lbl.className = 'label';
+      lbl.textContent = label;
+      cell.appendChild(canvas);
+      cell.appendChild(lbl);
+      return { cell, ctx: canvas.getContext('2d') };
+    }
+
+    function section(title) {
+      const h = document.createElement('h2');
+      h.textContent = title;
+      root.appendChild(h);
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      root.appendChild(grid);
+      return grid;
+    }
+
+    // ── Full faces ──────────────────────────────────────────────────────────
+    const faceGrid = section('full faces');
+    for (const id of FACE_IDS) {
+      const { cell, ctx } = makeCell(id);
+      renderGrid(ctx, buildFace(id), CELL_W, CELL_H);
+      faceGrid.appendChild(cell);
+    }
+
+    // ── Eye × Mouth combinations ────────────────────────────────────────────
+    for (const eyeID of EYE_IDS) {
+      const mouthGrid = section(`eyes: ${eyeID}`);
+      for (const mouthID of MOUTH_IDS) {
+        const { cell, ctx } = makeCell(mouthID);
+        renderGrid(ctx, buildExpression(eyeID, mouthID), CELL_W, CELL_H);
+        mouthGrid.appendChild(cell);
+      }
+    }
+  </script>
+</body>
+</html>

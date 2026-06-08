@@ -1,5 +1,5 @@
 import { REGISTRY } from './commands/index.js';
-import { resetIdleTimer, drawPixelFace } from '../avatar/avatar.js';
+import { resetIdleTimer } from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS } from '../js/time.js';
 
 const timeBlock = TIME_BLOCKS[getTimeBlock()];
@@ -68,6 +68,7 @@ async function processCommand(input) {
 
   const command = REGISTRY.get(name);
   if (!command) {
+    document.dispatchEvent(new CustomEvent('avatar:unknowncommand'));
     addMessage('stray', `command not recognized: "${name}". try "help".`);
     return;
   }
@@ -101,8 +102,6 @@ function syncHeights() {
 }
 
 // ── Input handling ─────────────────────────────────────────────────
-let typingRevertTimeout;
-
 editableSpan.addEventListener('keydown', (e) => {
   resetIdleTimer();
 
@@ -124,15 +123,12 @@ editableSpan.addEventListener('keydown', (e) => {
     }
 
     if (text.trim()) addMessage('visitor', text);
+    document.dispatchEvent(new CustomEvent('avatar:submit'));
     processCommand(text);
     return;
   }
 
-  if (e.key !== 'Enter') {
-    drawPixelFace('talking');
-    clearTimeout(typingRevertTimeout);
-    typingRevertTimeout = setTimeout(() => drawPixelFace('neutral'), 800);
-  }
+  document.dispatchEvent(new CustomEvent('avatar:keydown'));
 });
 
 terminalPanel.addEventListener('click', (e) => {
