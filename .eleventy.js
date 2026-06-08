@@ -18,8 +18,10 @@ module.exports = function(eleventyConfig) {
   // Main site HTML — pass through, don't process as templates
   eleventyConfig.ignores.add("index.html");
   eleventyConfig.ignores.add("404.html");
+  eleventyConfig.ignores.add("spritesheet.html");
   eleventyConfig.addPassthroughCopy("index.html");
   eleventyConfig.addPassthroughCopy("404.html");
+  eleventyConfig.addPassthroughCopy("spritesheet.html");
 
   return {
     templateFormats: ["njk"],   // only .njk files are treated as templates
