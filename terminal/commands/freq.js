@@ -18,7 +18,7 @@ export default {
       return `>> ${result.track.label}\ntransmission active.`;
     }
 
-    // no args — report status or start default track
+    // no args - report status or start default track
     if (isPlaying()) {
       return `broadcasting: ${getNowPlaying().label}`;
     }

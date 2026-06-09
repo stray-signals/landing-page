@@ -1,6 +1,6 @@
 export default {
   name:        'click',
-  description: 'Click on avatar — angry flash. Three clicks in quick succession fires the overtapped event.',
+  description: 'Clicking on stray makes them upset.',
   trigger:     { on: 'canvas', event: 'click' },
   eyes:        'angry',
   mouth:       'tense',

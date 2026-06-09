@@ -83,7 +83,7 @@ export default {
   handler: () => ({ action: 'adminLog' }),
 };
 
-// Called by terminal.js — needs addMessage in scope
+// Called by terminal.js - needs addMessage in scope
 export async function handleLog(addMessage) {
   const pat = getPat();
 

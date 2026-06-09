@@ -1,6 +1,6 @@
 export default {
   name:        'keydown',
-  description: 'Keypress in terminal — talking/flat flicker while typing, reverts 800ms after last key',
+  description: 'Keypress in terminal - talking/flat flicker while typing, reverts 800ms after last key',
   trigger:     { on: 'document', event: 'avatar:keydown' },
   eyes:        'normal',
   mouth:       'talking',

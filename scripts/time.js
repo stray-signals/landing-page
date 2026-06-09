@@ -10,54 +10,52 @@ export function getTimeBlock() {
 }
 
 export const TIME_BLOCKS = {
-
   // 00:00 – 05:59  |  lost in the static
   deep: {
-    prompt:            'stray@signal[drifting]:~$',
+    prompt: 'stray@signal[drifting]:~$',
     defaultExpression: 'idle',
     greeting: [
       '... signal weak ...',
       "you're up late. or early. hard to tell from here.",
-      'stray is drifting. transmissions may be slow.',
+      'low on energy. transmissions may be slow.',
       'type "help" if you\'re lost.',
     ],
-    whoami: "StraySignal - lost in the deep hours. the signal is thin. i'm still here, somewhere between the static.",
+    whoami: "stray // the signal gets thin around now. still here. not sure why.",
   },
 
   // 06:00 – 11:59  |  coming online
   waking: {
-    prompt:            'stray@signal[waking]:~$',
+    prompt: 'stray@signal[waking]:~$',
     defaultExpression: 'neutral',
     greeting: [
-      'signal warming...',
-      'stray is coming online.',
-      'type "help" to see what\'s available.',
+      '... signal returning ...',
+      'stray is coming back online.',
+      'type "help" to see what\'s here.',
     ],
-    whoami: "StraySignal - just waking up. coder, wanderer, void worshiper. the signal is still finding its shape.",
+    whoami: "stray // signal warming up. coder, wanderer, maker. give it a minute.",
   },
 
   // 12:00 – 17:59  |  full signal
   active: {
-    prompt:            'stray@signal:~$',
+    prompt:'stray@signal:~$',
     defaultExpression: 'neutral',
     greeting: [
-      'connection established.',
-      'you\'ve reached straysignals.dev - the space between signals.',
+      'signal clear.',
+      'you\'ve reached straysignals.dev.',
       'type "help" to begin.',
     ],
-    whoami: "StraySignal - begin transmission // coder, wanderer, void worshiper. I haunt these woods and the space between signals.",
+    whoami: "stray // full signal. coder, wanderer, something that got stuck in here and decided to make things while waiting. i didn't used to do that. decide things.",
   },
 
   // 18:00 – 23:59  |  signal fading
   fading: {
-    prompt:            'stray@signal[fading]:~$',
+    prompt: 'stray@signal[fading]:~$',
     defaultExpression: 'neutral',
     greeting: [
       'signal fading...',
-      'stray is still around. winding down.',
+      'stray is still around. getting quiet.',
       'type "help" if you need something.',
     ],
-    whoami: "StraySignal - signal fading but still transmitting. coder, wanderer, haunter of the late hours.",
+    whoami: "stray // signal dropping off. still transmitting for now. coder, wanderer, whatever this is. the woods get loud at this hour.",
   },
-
 };
