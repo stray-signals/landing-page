@@ -14,6 +14,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("root/media");
   eleventyConfig.addPassthroughCopy("root/transmissions/log.json");
   eleventyConfig.addPassthroughCopy("CNAME");
+  eleventyConfig.addPassthroughCopy("favicon.png");
 
   // Main site HTML - pass through, don't process as templates
   eleventyConfig.ignores.add("index.html");
