@@ -132,6 +132,7 @@ body {
 /* Window body */
 .window-body {
   flex: 1;
+  min-height: 0; /* lets flex children fill and shrink correctly */
   overflow: hidden;
   position: relative;
 }
@@ -259,6 +260,7 @@ body {
 
 .command-history {
   flex: 1;
+  min-height: 0; /* allows it to shrink within the flex column */
   overflow-y: auto;
   margin-bottom: 1rem;
   padding-right: 0.5rem;
