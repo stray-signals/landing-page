@@ -25,43 +25,187 @@ html, body {
 
 body {
   background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: 'Courier New', 'Fira Code', monospace;
-  padding: 1rem;
+  padding: 0;
 }
 
-.dashboard-wrapper {
-  max-width: 1200px;
+/* ── Desktop ──────────────────────────────────────────────────────── */
+#desktop {
+  position: relative;
   width: 100%;
-  height: auto;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  height: 100%;
   overflow: hidden;
 }
 
-.dashboard {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  width: 100%;
-  justify-content: center;
-  align-items: flex-start;
+/* ── CRT Window ───────────────────────────────────────────────────── */
+:root {
+  --titlebar-h: 34px;
 }
 
-/* SQUARE PANEL */
-.face-panel {
-  flex: 1;
-  min-width: 200px;
-  aspect-ratio: 1 / 1;
+.crt-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--color-primary);
+  border-radius: 10px;
   background: var(--color-bg);
-  border: 2px solid var(--color-border);
-  border-radius: 28px;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
-              inset 0 0 10px color-mix(in srgb, var(--color-bg) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent),
+              0 0 24px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  overflow: hidden;
+  min-width: 220px;
+  min-height: 160px;
+  transition: box-shadow 0.15s;
+}
+
+.crt-window.is-focused {
+  border-color: var(--color-accent-hi);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-hi) 50%, transparent),
+              0 0 32px color-mix(in srgb, var(--color-accent-hi) 20%, transparent);
+}
+
+.crt-window.is-minimized,
+.crt-window.is-closed {
+  display: none;
+}
+
+.crt-window.is-maximized {
+  left: 0 !important;
+  top:  0 !important;
+  width:  100% !important;
+  height: calc(100% - 42px) !important; /* leave room for taskbar */
+  border-radius: 0;
+}
+
+/* Window title bar */
+.window-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  height: var(--titlebar-h);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.window-title {
+  flex: 1;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  opacity: 0.55;
+}
+
+.window-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.win-btn {
+  width: 18px;
+  height: 18px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  opacity: 0.5;
+  transition: opacity 0.1s, background 0.1s;
+  padding: 0;
+}
+
+.win-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-color: var(--color-primary);
+}
+
+/* Window body */
+.window-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Resize handles — transparent strips along the border edge */
+.rz {
+  position: absolute;
+  z-index: 20;
+}
+.rz-n  { top: -4px;    left: 12px;   right: 12px;  height: 8px;  cursor: ns-resize;   }
+.rz-s  { bottom: -4px; left: 12px;   right: 12px;  height: 8px;  cursor: ns-resize;   }
+.rz-e  { right: -4px;  top: 12px;    bottom: 12px; width: 8px;   cursor: ew-resize;   }
+.rz-w  { left: -4px;   top: 12px;    bottom: 12px; width: 8px;   cursor: ew-resize;   }
+.rz-nw { top: -4px;    left: -4px;   width: 16px;  height: 16px; cursor: nwse-resize; }
+.rz-ne { top: -4px;    right: -4px;  width: 16px;  height: 16px; cursor: nesw-resize; }
+.rz-sw { bottom: -4px; left: -4px;   width: 16px;  height: 16px; cursor: nesw-resize; }
+.rz-se { bottom: -4px; right: -4px;  width: 16px;  height: 16px; cursor: nwse-resize; }
+
+/* Default window positions */
+#win-avatar {
+  left: max(20px, 4vw);
+  top:  max(24px, 4vh);
+  width:  clamp(240px, 24vw, 360px);
+  height: clamp(260px, 34vw, 420px);
+}
+
+#win-terminal {
+  left: clamp(280px, 32vw, 460px);
+  top:  max(24px, 4vh);
+  width:  clamp(300px, 42vw, 580px);
+  height: clamp(340px, 56vh, 580px);
+}
+
+/* ── Taskbar ───────────────────────────────────────────────────────── */
+#taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-bg));
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  z-index: 5;
+}
+
+.taskbar-item {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  border-radius: 4px;
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.1s, border-color 0.1s;
+}
+
+.taskbar-item:hover {
+  opacity: 1;
+  border-color: var(--color-primary);
+}
+
+/* FACE PANEL */
+.face-panel {
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,18 +248,12 @@ body {
 
 /* TERMINAL PANEL */
 .terminal-panel {
-  flex: 1.5;
-  min-width: 260px;
+  width: 100%;
+  height: 100%;
   background: var(--color-bg);
-  border: 2px solid var(--color-border);
-  border-radius: 28px;
   padding: 1rem;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
-              inset 0 0 10px color-mix(in srgb, var(--color-bg) 60%, transparent);
   display: flex;
   flex-direction: column;
-  height: auto;
-  max-height: 70vh;
   overflow: hidden;
 }
 
@@ -233,12 +371,12 @@ body {
 }
 
 /* ── ADMIN MODE ───────────────────────────────────────────────────── */
-.dashboard.admin-mode .face-panel {
+.dashboard.admin-mode #win-avatar {
   display: none;
 }
-.dashboard.admin-mode .terminal-panel {
-  flex: 1;
-  max-height: 85vh;
+.dashboard.admin-mode #win-terminal {
+  left: max(20px, 4vw) !important;
+  width: clamp(400px, 60vw, 800px) !important;
 }
 
 /* ── MODAL ────────────────────────────────────────────────────────── */
@@ -347,33 +485,25 @@ body {
 
 /* ── RESPONSIVE ───────────────────────────────────────────────────── */
 @media (max-width: 700px) {
-  body {
-    padding: 0.5rem;
+  /* Stack windows vertically on small screens */
+  #win-avatar {
+    left: 50% !important;
+    transform: translateX(-50%);
+    top: 12px !important;
+    width: min(200px, 55vw) !important;
+    height: min(220px, 55vw) !important;
   }
-  .dashboard {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-  .face-panel {
-    max-width: 240px;
-    width: 100%;
-  }
-  .terminal-panel {
-    max-height: 55vh;
-    width: 100%;
-    padding: 0.8rem;
+  #win-terminal {
+    left: 8px !important;
+    right: 8px !important;
+    top: clamp(250px, 62vw, 300px) !important;
+    width: calc(100vw - 16px) !important;
+    height: calc(100vh - clamp(270px, 64vw, 320px) - 48px) !important;
   }
   .input-prompt, .editable-area {
     font-size: 0.85rem;
   }
-}
-
-@media (max-height: 600px) {
   .terminal-panel {
-    max-height: 50vh;
-  }
-  .face-panel {
-    max-width: 180px;
+    padding: 0.8rem;
   }
 }

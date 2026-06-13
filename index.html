@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="icon" type="image/png" href="/favicon.png">
 
-  <!-- IndieWeb identity - add more rel="me" links as you join platforms -->
+  <!-- IndieWeb identity -->
   <link rel="me" href="https://github.com/stray-signals">
   <link rel="webmention" href="https://webmention.io/straysignals.dev/webmention">
   <link rel="authorization_endpoint" href="https://indieauth.com/auth">
@@ -15,32 +15,79 @@
   <link rel="alternate" type="application/atom+xml" title="straysignals.dev :: transmission log" href="/signal.xml">
 </head>
 <body>
-<div class="dashboard-wrapper">
-  <div class="dashboard">
-    <div class="face-panel crt-effect">
-      <canvas id="pixelFaceCanvas" width="512" height="512"></canvas>
+<div id="desktop" class="dashboard">
+
+  <!-- ── Avatar window ───────────────────────────────────────────── -->
+  <div class="crt-window" id="win-avatar" data-title="stray">
+    <div class="window-titlebar">
+      <span class="window-title">stray</span>
+      <div class="window-controls">
+        <button class="win-btn win-min"   title="minimize">−</button>
+        <button class="win-btn win-max"   title="expand">○</button>
+        <button class="win-btn win-close" title="close">×</button>
+      </div>
     </div>
-    <div class="terminal-panel crt-effect" id="terminalPanel">
-      <div class="command-history" id="commandHistory"></div>
-      <div class="input-line">
-        <span class="input-prompt" id="inputPrompt">stray@signal:~$</span>
-        <div class="command-editor" id="commandEditor">
-          <span id="editableSpan" class="editable-area" contenteditable="true"></span>
-          <span class="block-cursor" id="blockCursor"></span>
+    <div class="window-body">
+      <div class="face-panel crt-effect">
+        <canvas id="pixelFaceCanvas" width="512" height="512"></canvas>
+      </div>
+    </div>
+    <div class="rz rz-n"  data-dir="n"></div>
+    <div class="rz rz-s"  data-dir="s"></div>
+    <div class="rz rz-e"  data-dir="e"></div>
+    <div class="rz rz-w"  data-dir="w"></div>
+    <div class="rz rz-nw" data-dir="nw"></div>
+    <div class="rz rz-ne" data-dir="ne"></div>
+    <div class="rz rz-sw" data-dir="sw"></div>
+    <div class="rz rz-se" data-dir="se"></div>
+  </div>
+
+  <!-- ── Terminal window ─────────────────────────────────────────── -->
+  <div class="crt-window" id="win-terminal" data-title="terminal">
+    <div class="window-titlebar">
+      <span class="window-title">terminal</span>
+      <div class="window-controls">
+        <button class="win-btn win-min"   title="minimize">−</button>
+        <button class="win-btn win-max"   title="expand">○</button>
+        <button class="win-btn win-close" title="close">×</button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="terminal-panel crt-effect" id="terminalPanel">
+        <div class="command-history" id="commandHistory"></div>
+        <div class="input-line">
+          <span class="input-prompt" id="inputPrompt">stray@signal:~$</span>
+          <div class="command-editor" id="commandEditor">
+            <span id="editableSpan" class="editable-area" contenteditable="true"></span>
+            <span class="block-cursor" id="blockCursor"></span>
+          </div>
         </div>
       </div>
     </div>
+    <div class="rz rz-n"  data-dir="n"></div>
+    <div class="rz rz-s"  data-dir="s"></div>
+    <div class="rz rz-e"  data-dir="e"></div>
+    <div class="rz rz-w"  data-dir="w"></div>
+    <div class="rz rz-nw" data-dir="nw"></div>
+    <div class="rz rz-ne" data-dir="ne"></div>
+    <div class="rz rz-sw" data-dir="sw"></div>
+    <div class="rz rz-se" data-dir="se"></div>
   </div>
+
   <!-- h-card: machine-readable IndieWeb identity - intentionally hidden -->
   <div class="h-card" style="display:none">
     <span class="p-name">StraySignal</span>
     <a class="u-url" href="https://straysignals.dev">straysignals.dev</a>
     <a class="u-email" href="mailto:contact@straysignals.dev">contact@straysignals.dev</a>
   </div>
+
+  <!-- Taskbar -->
+  <div id="taskbar"></div>
+
 </div>
 
 <script type="module" src="avatar/avatar.js"></script>
 <script type="module" src="terminal/terminal.js"></script>
+<script type="module" src="scripts/desktop.js"></script>
 </body>
 </html>
-
