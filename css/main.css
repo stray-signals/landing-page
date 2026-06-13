@@ -132,9 +132,11 @@ body {
 /* Window body */
 .window-body {
   flex: 1;
-  min-height: 0; /* lets flex children fill and shrink correctly */
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  position: relative;
 }
 
 /* Resize handles — transparent strips along the border edge */
@@ -204,8 +206,8 @@ body {
 
 /* FACE PANEL */
 .face-panel {
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   background: var(--color-bg);
   display: flex;
   align-items: center;
@@ -249,8 +251,8 @@ body {
 
 /* TERMINAL PANEL */
 .terminal-panel {
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   background: var(--color-bg);
   padding: 1rem;
   display: flex;
