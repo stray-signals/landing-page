@@ -6,13 +6,13 @@ export default {
   mouth:       'tense',
   revert:      1500,
 
-  handler({ show, setDefault, pauseDefault, resetIdleTimers }) {
+  handler({ forceShow, setDefault, pauseDefault, resetIdleTimers }) {
     let frustrationClicks      = 0;
     let frustrationResetTimeout;
 
     return () => {
       pauseDefault();
-      show('angry', 'tense');
+      forceShow('angry', 'tense');
       frustrationClicks++;
 
       clearTimeout(frustrationResetTimeout);

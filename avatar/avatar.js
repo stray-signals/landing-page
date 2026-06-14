@@ -8,7 +8,14 @@ const IS_DEEP = getTimeBlock() === 'deep';
 
 // ─── Expression helpers ───────────────────────────────────────────────────────
 
+// During deep hours the loading cycle owns the face - block all normal show calls.
+// Use forceShow for interactions that should break through regardless.
 function show(eyes, mouth) {
+  if (IS_DEEP) return;
+  showExpression(eyes, mouth);
+}
+
+function forceShow(eyes, mouth) {
   showExpression(eyes, mouth);
 }
 
@@ -78,7 +85,7 @@ export function resetIdleTimer() {
 // Interactions with a handler factory call it to get a custom listener.
 // All others get the generic show → optional revert path.
 
-const ctx = { show, showFace, setDefault, pauseDefault, resetIdleTimers };
+const ctx = { show, forceShow, showFace, setDefault, pauseDefault, resetIdleTimers };
 
 for (const interaction of INTERACTIONS) {
   if (!interaction.trigger) continue;
@@ -87,6 +94,7 @@ for (const interaction of INTERACTIONS) {
   const listener = interaction.handler
     ? interaction.handler(ctx)
     : () => {
+        if (IS_DEEP) return;
         pauseDefault();
         if (interaction.default) {
           setDefault();
@@ -112,4 +120,4 @@ document.addEventListener('avatar:reopened', () => {
 
 setDefault();
 resetIdleTimers();
-initGaze();
+if (!IS_DEEP) initGaze();
