@@ -1,22 +1,19 @@
 export default {
   name:        'keydown',
-  description: 'Keypress in terminal - talking/flat flicker while typing, reverts 800ms after last key',
+  description: 'Keypress in terminal - normal/flat while typing, resets idle timers',
   trigger:     { on: 'document', event: 'avatar:keydown' },
   eyes:        'normal',
-  mouth:       'talking',
+  mouth:       'flat',
 
   handler({ show, setDefault, pauseDefault, resetIdleTimers }) {
-    let talkFlicker = false;
     let typingTimer;
 
     return () => {
       pauseDefault();
-      talkFlicker = !talkFlicker;
-      show('normal', talkFlicker ? 'talking' : 'flat');
+      show('normal', 'flat');
 
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
-        talkFlicker = false;
         setDefault();
       }, 800);
 
