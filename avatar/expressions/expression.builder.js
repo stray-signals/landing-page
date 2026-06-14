@@ -11,6 +11,19 @@ function getCtx() {
   return ctx;
 }
 
+// ─── Gaze state ───────────────────────────────────────────────────────────────
+
+let gaze = { yOffset: 0, flipped: false };
+let currentEyeID   = null;
+let currentMouthID = null;
+
+export function setGaze(newGaze) {
+  gaze = newGaze;
+  if (currentEyeID && currentMouthID) {
+    drawExpression(buildExpression(currentEyeID, currentMouthID));
+  }
+}
+
 const ROWS   = 32;
 const COLS   = 64;
 const CELL_W = 8;
@@ -36,7 +49,7 @@ function drawStatic(c) {
 
 // Assemble a 32-row grid from eye + mouth components.
 export function buildExpression(eyeID, mouthID, eyeOffset = 0, mouthOffset = 0) {
-  const eyes  = getEyes(eyeID, eyeOffset);
+  const eyes  = getEyes(eyeID, eyeOffset, gaze.yOffset, gaze.flipped);
   const mouth = getMouth(mouthID, mouthOffset);
   return [...eyes, ...mouth];
 }
@@ -80,9 +93,13 @@ export function drawExpression(grid) {
 }
 
 export function showExpression(eyeID, mouthID, eyeOffset = 0, mouthOffset = 0) {
+  currentEyeID   = eyeID;
+  currentMouthID = mouthID;
   drawExpression(buildExpression(eyeID, mouthID, eyeOffset, mouthOffset));
 }
 
 export function showFace(faceID) {
+  currentEyeID   = null;
+  currentMouthID = null;
   drawExpression(buildFace(faceID));
 }

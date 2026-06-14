@@ -11,7 +11,7 @@ export default {
       resetIdleTimers();
 
       const words = e.detail?.words ?? 0;
-      const maxTicks = Math.max(4, Math.round(words * 0.8));
+      const maxTicks = Math.max(0, Math.round(words * 0.8));
 
       let frame = false;
       let ticks = 0;

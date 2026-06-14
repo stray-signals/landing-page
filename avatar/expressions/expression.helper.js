@@ -20,15 +20,23 @@ export function normalizeRows(data, offset = 0) {
   return data.map(row => normalizeRow(row, offset));
 }
 
+// Reverse a row string so the face looks the other direction.
+export function flipRow(row) {
+  return row.split('').reverse().join('');
+}
+
 // Pad a row array to maxRows with blankRows.
 //   'top'    - padding goes before the data  (eyes)
 //   'bottom' - padding goes after the data   (mouths)
 //   'split'  - split evenly, uneven leans bottom (faces)
-export function padRowCount(data, maxRows, position = 'split') {
+// rowShift nudges the data vertically within the padded block (eyes only).
+//   negative = shift up (less top padding), positive = shift down (more top padding)
+export function padRowCount(data, maxRows, position = 'split', rowShift = 0) {
   const padding = Math.max(0, maxRows - data.length);
 
   if (position === 'top') {
-    return [...Array(padding).fill(blankRow), ...data];
+    const topPad = Math.max(0, padding + rowShift);
+    return [...Array(topPad).fill(blankRow), ...data].slice(0, maxRows);
   }
   if (position === 'bottom') {
     return [...data, ...Array(padding).fill(blankRow)];

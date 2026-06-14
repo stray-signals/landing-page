@@ -1,6 +1,7 @@
 import { showExpression, showFace } from './expressions/expression.builder.js';
 import { getTimeBlock } from '../scripts/time.js';
 import { INTERACTIONS, INTERACTION_MAP } from './interactions/index.js';
+import { initGaze } from './gaze.js';
 
 const canvas  = document.getElementById('pixelFaceCanvas');
 const IS_DEEP = getTimeBlock() === 'deep';
@@ -111,3 +112,4 @@ document.addEventListener('avatar:reopened', () => {
 
 setDefault();
 resetIdleTimers();
+initGaze();

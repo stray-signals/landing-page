@@ -1,4 +1,4 @@
-import { blankRow, normalizeRows, padRowCount } from './expression.helper.js';
+import { blankRow, normalizeRows, padRowCount, flipRow } from './expression.helper.js';
 
 const EYE_MAX_ROW_COUNT = 18;
 
@@ -135,7 +135,9 @@ const eyes = {
 
 export const EYE_IDS = Object.keys(eyes);
 
-export function getEyes(eyeID, offset = 0) {
+export function getEyes(eyeID, offset = 0, rowShift = 0, flipped = false) {
   const data = eyes[eyeID]?.data ?? [];
-  return padRowCount(normalizeRows(data, offset), EYE_MAX_ROW_COUNT, 'top');
+  let rows = normalizeRows(data, offset);
+  if (flipped) rows = rows.map(flipRow);
+  return padRowCount(rows, EYE_MAX_ROW_COUNT, 'top', rowShift);
 }
