@@ -12,7 +12,7 @@ export default {
 
       let frame = false;
       let ticks = 0;
-      const maxTicks = 6;
+      const maxTicks = 8;
       const interval = setInterval(() => {
         frame = !frame;
         ticks++;
@@ -22,7 +22,7 @@ export default {
           show('normal', 'flat');
           setDefault();
         }
-      }, 120);
+      }, 150);
     };
   },
 };
