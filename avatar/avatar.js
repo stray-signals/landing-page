@@ -109,14 +109,6 @@ for (const interaction of INTERACTIONS) {
   target.addEventListener(interaction.trigger.event, listener);
 }
 
-// ── Avatar window reopened after being closed: show annoyance ────────────────
-document.addEventListener('avatar:reopened', () => {
-  pauseDefault();
-  show('unamused', 'flat');
-  setTimeout(setDefault, 2000);
-  resetIdleTimers();
-});
-
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 setDefault();
