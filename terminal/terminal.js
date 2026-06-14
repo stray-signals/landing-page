@@ -68,12 +68,20 @@ async function processCommand(input) {
     catch { addMessage('stray', 'signal lost. try again.'); return; }
   }
 
+  let responseText = '';
   if (result?.action === 'clear')          { document.getElementById('commandHistory').innerHTML = ''; }
   else if (result?.action === 'startTransmit') { startTransmitMode(); }
   else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
   else if (result?.action === 'logout')    { deactivateAdmin(); }
   else if (result?.action === 'adminLog')  { handleLog(addMessage); }
-  else if (typeof result === 'string')     { addMessage('stray', result); }
+  else if (typeof result === 'string')     { responseText = result; addMessage('stray', result); }
+
+  dispatchResponding(responseText);
+}
+
+function dispatchResponding(text) {
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.dispatchEvent(new CustomEvent('avatar:responding', { detail: { words } }));
 }
 
 // ── Input handling ─────────────────────────────────────────────────
@@ -93,7 +101,6 @@ editableSpan.addEventListener('keydown', async (e) => {
     }
 
     if (text.trim()) addMessage('visitor', text);
-    document.dispatchEvent(new CustomEvent('avatar:submit'));
     processCommand(text);
     return;
   }

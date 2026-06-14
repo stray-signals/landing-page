@@ -1,18 +1,20 @@
 export default {
   name:        'submit',
-  description: 'Terminal command submitted - Stray talks back, flickering talking/talkingTwo, then settles to flat',
-  trigger:     { on: 'document', event: 'avatar:submit' },
-  eyes:        'skeptical',
+  description: 'Stray responds - flickers talking/talkingTwo for a duration based on response word count, then settles to flat',
+  trigger:     { on: 'document', event: 'avatar:responding' },
+  eyes:        'normal',
   mouth:       'talking',
 
   handler({ show, setDefault, pauseDefault, resetIdleTimers }) {
-    return () => {
+    return (e) => {
       pauseDefault();
       resetIdleTimers();
 
+      const words = e.detail?.words ?? 0;
+      const maxTicks = Math.max(4, Math.round(words * 0.8));
+
       let frame = false;
       let ticks = 0;
-      const maxTicks = 8;
       const interval = setInterval(() => {
         frame = !frame;
         ticks++;
