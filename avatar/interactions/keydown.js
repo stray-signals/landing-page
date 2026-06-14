@@ -5,10 +5,11 @@ export default {
   eyes:        'normal',
   mouth:       'flat',
 
-  handler({ show, setDefault, pauseDefault, resetIdleTimers }) {
+  handler({ show, setDefault, pauseDefault, resetIdleTimers, IS_DEEP }) {
     let typingTimer;
 
     return () => {
+      if (IS_DEEP) return;
       pauseDefault();
       show('normal', 'flat');
 

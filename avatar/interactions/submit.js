@@ -5,8 +5,9 @@ export default {
   eyes:        'normal',
   mouth:       'talking',
 
-  handler({ show, setDefault, pauseDefault, resetIdleTimers }) {
+  handler({ show, setDefault, pauseDefault, resetIdleTimers, IS_DEEP }) {
     return (e) => {
+      if (IS_DEEP) return;
       pauseDefault();
       resetIdleTimers();
 

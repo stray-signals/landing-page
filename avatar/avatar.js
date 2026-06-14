@@ -33,6 +33,7 @@ let loadingIndex    = 0;
 let loadingInterval = null;
 
 function startLoadingCycle() {
+  stopLoadingCycle();
   showFace(LOADING_FACES[loadingIndex]);
   loadingInterval = setInterval(() => {
     loadingIndex = (loadingIndex + 1) % LOADING_FACES.length;
@@ -85,7 +86,7 @@ export function resetIdleTimer() {
 // Interactions with a handler factory call it to get a custom listener.
 // All others get the generic show → optional revert path.
 
-const ctx = { show, forceShow, showFace, setDefault, pauseDefault, resetIdleTimers };
+const ctx = { show, forceShow, showFace, setDefault, pauseDefault, resetIdleTimers, IS_DEEP };
 
 for (const interaction of INTERACTIONS) {
   if (!interaction.trigger) continue;
