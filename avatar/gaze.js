@@ -8,7 +8,9 @@ function computeGaze(mouseX, mouseY) {
 
   const rect = canvas.getBoundingClientRect();
 
-  const yOffset = mouseY < rect.top ? -1 : mouseY > rect.bottom ? 1 : 0;
+  const gazeOffset = 2;
+
+  const yOffset = mouseY < rect.top ? -gazeOffset : mouseY > rect.bottom ? gazeOffset : 0;
   const flipped = mouseX < rect.left;
 
   return { yOffset, flipped };
