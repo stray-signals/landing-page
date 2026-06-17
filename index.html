@@ -89,5 +89,39 @@
 <script type="module" src="avatar/avatar.js"></script>
 <script type="module" src="terminal/terminal.js"></script>
 <script type="module" src="scripts/desktop.js"></script>
+
+<!-- CRT overlay layers -->
+<div class="crt-overlay"></div>
+<div class="crt-cool-tint"></div>
+
+<script>
+(function initCRTFlicker() {
+  const target = document.documentElement;
+
+  let lastFlicker = 0;
+  let currentOpacity = 1;
+  let targetOpacity = 1;
+  let nextFlickerDelay = 0;
+
+  function flicker(timestamp) {
+    if (timestamp - lastFlicker > nextFlickerDelay) {
+      if (Math.random() > 0.4) {
+        targetOpacity = 0.82 + Math.random() * 0.18;
+      } else {
+        targetOpacity = 1;
+      }
+      lastFlicker = timestamp;
+      nextFlickerDelay = 40 + Math.random() * 140;
+    }
+
+    currentOpacity += (targetOpacity - currentOpacity) * 0.3;
+    target.style.opacity = currentOpacity;
+
+    requestAnimationFrame(flicker);
+  }
+
+  requestAnimationFrame(flicker);
+})();
+</script>
 </body>
 </html>
