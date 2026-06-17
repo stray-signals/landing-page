@@ -93,40 +93,6 @@
     margin-top: 32px;
   }
 
-  /* Acronym block */
-  .acronym {
-    background: var(--charcoal);
-    color: var(--cream);
-    padding: 32px 36px;
-    margin-bottom: 48px;
-    border-radius: 4px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 8px 20px;
-    align-items: center;
-  }
-
-  .acronym-letter {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--earth);
-    line-height: 1;
-  }
-
-  .acronym-word {
-    font-size: 0.95rem;
-    color: var(--cream);
-    opacity: 0.85;
-    letter-spacing: 0.05em;
-    line-height: 1.8;
-  }
-
-  .acronym-word span {
-    color: var(--accent-yellow);
-    font-weight: 500;
-  }
-
   /* Section */
   .section {
     margin-bottom: 48px;
@@ -158,6 +124,10 @@
     line-height: 1.85;
     color: var(--charcoal);
     opacity: 0.9;
+  }
+
+  .pitch-text + .pitch-text {
+    margin-top: 1.2em;
   }
 
   /* Features grid */
@@ -368,6 +338,10 @@
     margin-top: 6px;
   }
 
+  .footer-initial {
+    color: var(--earth);
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -389,37 +363,14 @@
     <div class="header-rule"></div>
   </div>
 
-  <!-- Acronym -->
-  <div class="acronym">
-    <div class="acronym-letter">R</div>
-    <div class="acronym-word"><span>Roll</span> - every photo is a commitment, not a preview</div>
-    <div class="acronym-letter">O</div>
-    <div class="acronym-word"><span>Of</span> - a collection built one wander at a time</div>
-    <div class="acronym-letter">A</div>
-    <div class="acronym-word"><span>Amazing</span> - seen through the eyes of a child</div>
-    <div class="acronym-letter">M</div>
-    <div class="acronym-word"><span>Memories</span> - preserved before they change</div>
-  </div>
-
   <!-- The Idea -->
   <div class="section">
     <div class="section-label">The Idea</div>
     <p class="pitch-text">
-      ROAM is a handmade point-and-shoot camera built for the wanderers of the world - 
-      kids who explore first and explain later, and the adults who remember doing the same. 
-      No screen. No instant preview. No delete and retake. Just pick it up, turn the dial, 
-      press it in, and trust the moment. The photos wait for you - like they always used to.
+      Most cameras made for kids are either tablets with a camera app or toy cameras that happen to take photos. ROAM is just a camera. No games, nothing on it to do except take a picture and tell a story.
     </p>
-  </div>
-
-  <!-- The Problem -->
-  <div class="section">
-    <div class="section-label">The Problem It Solves</div>
     <p class="pitch-text">
-      Most cameras made for kids are either expensive tablets in disguise, or cheap plastic 
-      toys that break in a week. Neither teaches a child anything about photography - or 
-      about patience, or about looking at the world with intention. ROAM does all three, 
-      quietly, without making a fuss about it.
+      If it breaks, you can fix it. The parts are standard and replaceable - nothing proprietary, nothing that requires sending it back.
     </p>
   </div>
 
@@ -429,32 +380,32 @@
     <div class="feature">
       <span class="feature-icon">📷</span>
       <div class="feature-title">Real Camera</div>
-      <div class="feature-desc">OV2640 sensor captures up to 1600×1200 JPEG photos saved directly to microSD.</div>
+      <div class="feature-desc">OV2640 sensor. Shoots up to 1600x1200, saves to microSD as JPEG.</div>
     </div>
     <div class="feature">
       <span class="feature-icon">🎛️</span>
       <div class="feature-title">Tactile Dial</div>
-      <div class="feature-desc">EC11 rotary encoder - click, turn, press. Every interaction has weight and intention.</div>
+      <div class="feature-desc">EC11 rotary encoder - click, turn, press. Feels like something.</div>
     </div>
     <div class="feature">
       <span class="feature-icon">🎞️</span>
       <div class="feature-title">Film Simulations</div>
-      <div class="feature-desc">Dial through looks inspired by classic films - Kodachrome, Portra, and more.</div>
+      <div class="feature-desc">Dial through looks based on classic films. Kodachrome, Portra, a few others.</div>
     </div>
     <div class="feature">
       <span class="feature-icon">📡</span>
       <div class="feature-title">No-App Gallery</div>
-      <div class="feature-desc">Hold the dial to create a Wi-Fi hotspot. Browse photos in any browser, no cables needed.</div>
+      <div class="feature-desc">Hold the dial to spin up a Wi-Fi hotspot. Browse photos in any browser, no app needed.</div>
     </div>
     <div class="feature">
       <span class="feature-icon">🖥️</span>
       <div class="feature-title">E-Ink Display</div>
-      <div class="feature-desc">Shows your current film simulation and a pixel art companion. Uses almost zero battery when idle.</div>
+      <div class="feature-desc">Shows the current film simulation and Caroline. Barely uses battery while idle.</div>
     </div>
     <div class="feature">
       <span class="feature-icon">🔋</span>
       <div class="feature-title">Rechargeable</div>
-      <div class="feature-desc">Built-in LiPo battery charges over USB-C. No AA batteries to hunt for.</div>
+      <div class="feature-desc">Built-in LiPo, charges over USB-C. No AA batteries to hunt for.</div>
     </div>
   </div>
 
@@ -509,13 +460,9 @@
     <div class="caroline-text">
       <h3>Meet <span>Caroline</span></h3>
       <p>
-        Every ROAM has a companion - a Carolina Wren named Caroline who lives on the e-ink display. 
-        She reacts to what the camera is doing: perching quietly while idle, jumping when a photo 
-        is taken, looking sleepy when the battery runs low. Like the wren herself, small but 
-        famously loud - a storyteller in a tiny body.
+        Every ROAM has a companion on the e-ink display - a Carolina Wren named Caroline. She reacts to what the camera is doing: still while idle, animated when a photo lands, drooping when the battery gets low. Small, but you'd notice if she wasn't there.
       </p>
     </div>
-    <!-- Simple pixel wren suggestion grid -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
       <div style="font-size:2.5rem;">🐦</div>
       <div style="font-size:0.6rem;color:var(--cream);opacity:0.4;letter-spacing:0.1em;text-transform:uppercase;">pixel art TBD</div>
@@ -524,7 +471,7 @@
 
   <!-- Philosophy -->
   <div class="philosophy">
-    <p>"With a notoriously loud song for its tiny size, birdwatchers in the Blue Ridge region 
+    <p>"With a notoriously loud song for its tiny size, birdwatchers in the Blue Ridge region
     often associate wrens with the songs and memories that leave the sweetest emotions in our minds."</p>
     <cite>- On the Carolina Wren, Blue Ridge folklore</cite>
   </div>
@@ -533,17 +480,14 @@
   <div class="section">
     <div class="section-label">The Bigger Picture</div>
     <p class="pitch-text">
-      ROAM is the first in a series of projects built around a simple idea - analog soul, modern guts. 
-      Objects that feel like they belong to a slower era but are secretly clever little computers. 
-      Things worth picking up, turning over in your hands, and actually using. 
-      In a world of infinite screens, ROAM is a camera that asks you to look up.
+      ROAM is the first of a few projects built around the same idea. Hardware that feels like it belongs to a slower time, running on a modern chip. Things worth picking up and actually using.
     </p>
   </div>
 
   <!-- Footer -->
   <div class="footer">
     <div class="footer-logo">ROAM</div>
-    <div class="footer-sub">A Roll of Amazing Memories</div>
+    <div class="footer-sub"><span class="footer-initial">R</span>oll <span class="footer-initial">O</span>f <span class="footer-initial">A</span>mazing <span class="footer-initial">M</span>emories</div>
   </div>
 
 </div>
