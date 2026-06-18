@@ -517,43 +517,6 @@ body {
   );
 }
 
-.crt-overlay::after {
-  content: '';
-  position: fixed;
-  top: -40%;
-  left: 0;
-  width: 100%;
-  height: 40%;
-  pointer-events: none;
-  z-index: 9999;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255, 240, 200, 0.03) 20%,
-    rgba(255, 240, 200, 0.07) 50%,
-    rgba(255, 240, 200, 0.03) 80%,
-    transparent 100%
-  );
-  mix-blend-mode: screen;
-  animation: crt-band-roll 20s linear infinite;
-}
-
-@keyframes crt-band-roll {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(350vh); }
-}
-
-.crt-cool-tint {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9998;
-  background: rgba(180, 220, 255, 0.03);
-  mix-blend-mode: multiply;
-}
 
 /* ── RESPONSIVE ───────────────────────────────────────────────────── */
 @media (max-width: 700px) {
