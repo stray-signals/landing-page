@@ -27,6 +27,10 @@ module.exports = function(eleventyConfig) {
   // Project pages - remap root/projects → /projects/
   eleventyConfig.addPassthroughCopy({ "root/projects": "projects" });
 
+  // Pigeonhole pitch page - sourced from the pigeonhole repo (submodule,
+  // sparse-checked-out to just site/) so it lives alongside the product.
+  eleventyConfig.addPassthroughCopy({ "external/pigeonhole-src/site": "projects/pigeonhole" });
+
   return {
     templateFormats: ["njk"],   // only .njk files are treated as templates
     dir: {

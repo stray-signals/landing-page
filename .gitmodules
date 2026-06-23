@@ -1,0 +1,3 @@
+[submodule "external/pigeonhole-src"]
+	path = external/pigeonhole-src
+	url = https://github.com/stray-signals/Pigeonhole.git
