@@ -18,15 +18,15 @@ jobs:
 
       - name: Pull latest pigeonhole commit
         run: |
-          git -C external/pigeonhole-src fetch origin main
-          git -C external/pigeonhole-src checkout main
-          git -C external/pigeonhole-src reset --hard origin/main
+          git -C root/projects/pigeonhole fetch origin main
+          git -C root/projects/pigeonhole checkout main
+          git -C root/projects/pigeonhole reset --hard origin/main
 
       - name: Commit and push pointer bump, if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add external/pigeonhole-src
+          git add root/projects/pigeonhole
           if git diff --cached --quiet; then
             echo "Submodule already up to date — nothing to commit."
           else
