@@ -13,8 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
           token: ${{ secrets.ROAM_SYNC_TOKEN }}
+
+      - name: Init ROAM submodule
+        run: git submodule update --init root/projects/roam
 
       - name: Pull latest ROAM commit
         run: |

@@ -20,8 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
-          token: ${{ secrets.SUBMODULE_SYNC_TOKEN }}
+          persist-credentials: false
+
+      - name: Init submodules
+        run: |
+          git config submodule.root/projects/pigeonhole.url "https://x-access-token:${{ secrets.SUBMODULE_SYNC_TOKEN }}@github.com/stray-signals/Pigeonhole.git"
+          git config submodule.root/projects/roam.url "https://x-access-token:${{ secrets.ROAM_SYNC_TOKEN }}@github.com/stray-signals/ROAM.git"
+          git submodule update --init --recursive
 
       - uses: actions/setup-node@v4
         with:

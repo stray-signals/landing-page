@@ -13,8 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
           token: ${{ secrets.SUBMODULE_SYNC_TOKEN }}
+
+      - name: Init pigeonhole submodule
+        run: git submodule update --init root/projects/pigeonhole
 
       - name: Pull latest pigeonhole commit
         run: |
