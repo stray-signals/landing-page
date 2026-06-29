@@ -1,3 +1,7 @@
 node_modules/
 _site/
 stray.md
+
+# Claude Code working files
+.claude/
+CLAUDE.md
