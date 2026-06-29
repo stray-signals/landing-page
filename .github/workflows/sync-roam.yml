@@ -16,7 +16,9 @@ jobs:
           token: ${{ secrets.ROAM_SYNC_TOKEN }}
 
       - name: Init ROAM submodule
-        run: git submodule update --init root/projects/roam
+        run: |
+          git config submodule.root/projects/roam.url "https://x-access-token:${{ secrets.ROAM_SYNC_TOKEN }}@github.com/stray-signals/ROAM.git"
+          git submodule update --init root/projects/roam
 
       - name: Pull latest ROAM commit
         run: |

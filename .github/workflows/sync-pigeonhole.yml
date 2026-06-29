@@ -16,7 +16,9 @@ jobs:
           token: ${{ secrets.SUBMODULE_SYNC_TOKEN }}
 
       - name: Init pigeonhole submodule
-        run: git submodule update --init root/projects/pigeonhole
+        run: |
+          git config submodule.root/projects/pigeonhole.url "https://x-access-token:${{ secrets.SUBMODULE_SYNC_TOKEN }}@github.com/stray-signals/Pigeonhole.git"
+          git submodule update --init root/projects/pigeonhole
 
       - name: Pull latest pigeonhole commit
         run: |
