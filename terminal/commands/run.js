@@ -5,12 +5,17 @@ export default {
   description: 'runs a application',
   usage:       'run <project>',
   handler: (args) => {
-    const id = args.trim().toLowerCase();
-    const project = PROJECTS[id];
+    const pipeIdx = args.indexOf('|');
+    const target  = (pipeIdx === -1 ? args : args.slice(0, pipeIdx)).trim().toLowerCase();
+    const extra   = pipeIdx === -1 ? null : args.slice(pipeIdx + 1).trim();
+
+    if (target === 'transmit') return { action: 'openTransmit', password: extra };
+
+    const project = PROJECTS[target];
 
     if (!project) {
       const available = Object.keys(PROJECTS).join(', ');
-      return `run: unknown project "${id}"\navailable: ${available}`;
+      return `run: unknown project "${target}"\navailable: ${available}`;
     }
 
     sessionStorage.setItem('stray_ref', 'terminal');

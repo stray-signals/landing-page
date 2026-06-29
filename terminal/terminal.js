@@ -1,12 +1,12 @@
 import { REGISTRY }                                          from './commands/index.js';
 import { ADMIN_REGISTRY }                                     from './admin/commands/index.js';
 import { addMessage, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
-import { getInputMode, startTransmitMode, exitMessageMode, submitMessage } from './terminal.input.js';
 import { resetIdleTimer }                                     from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS }                          from '../scripts/time.js';
 import { getCwdString }                                       from './terminal.fs.js';
 import { storePat, clearPat }   from './admin/auth.js';
 import { handleLog }            from './admin/commands/log.js';
+import { openTransmitWindow }   from '../scripts/transmit-window.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];
 const BASE_PROMPT = timeBlock.prompt;
@@ -38,6 +38,7 @@ function deactivateAdmin() {
   dashboard.classList.remove('admin-mode');
   promptEl.textContent = buildPrompt();
   addMessage('stray', 'logged out.');
+  document.dispatchEvent(new CustomEvent('terminal:adminlogout'));
 }
 
 document.addEventListener('terminal:adminlogin', () => {
@@ -50,8 +51,11 @@ async function processCommand(input) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
-  const [name, ...rest] = trimmed.toLowerCase().split(/\s+/);
-  const args = rest.join(' ');
+  const firstSpace = trimmed.indexOf(' ');
+  const name     = (firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace)).toLowerCase();
+  const rawArgs  = firstSpace === -1 ? '' : trimmed.slice(firstSpace + 1).trim();
+  // preserve case for "run ... | <password>" so a real password isn't mangled
+  const args = (name === 'run' && rawArgs.includes('|')) ? rawArgs : rawArgs.toLowerCase();
 
   const command = getRegistry().get(name);
   if (!command) {
@@ -70,7 +74,7 @@ async function processCommand(input) {
 
   let responseText = '';
   if (result?.action === 'clear')          { document.getElementById('commandHistory').innerHTML = ''; }
-  else if (result?.action === 'startTransmit') { startTransmitMode(); }
+  else if (result?.action === 'openTransmit') { openTransmitWindow(result.password); }
   else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
   else if (result?.action === 'logout')    { deactivateAdmin(); }
   else if (result?.action === 'adminLog')  { handleLog(addMessage); }
@@ -93,12 +97,6 @@ editableSpan.addEventListener('keydown', async (e) => {
     const text = editableSpan.textContent;
     editableSpan.textContent = '';
     placeCaretAtEnd(editableSpan);
-
-    if (getInputMode() === 'message') {
-      if (text.trim()) { await submitMessage(text.trim()); }
-      else { addMessage('stray', 'transmission cancelled.'); exitMessageMode(); }
-      return;
-    }
 
     if (text.trim()) addMessage('visitor', text);
     processCommand(text);
