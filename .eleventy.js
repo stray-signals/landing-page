@@ -26,13 +26,14 @@ module.exports = function(eleventyConfig) {
 
   // Project pages - remap root/projects → /projects/
   eleventyConfig.addPassthroughCopy({ "root/projects/stray-console.js": "projects/stray-console.js" });
-  eleventyConfig.addPassthroughCopy({ "root/projects/roam": "projects/roam" });
 
-  // Pigeonhole pitch page - root/projects/pigeonhole is a submodule (sparse-
-  // checked-out to just site/) pointing at the pigeonhole repo, so the page
-  // lives alongside the product it describes. Only publish site/ - not the
-  // submodule's other tracked files (LICENSE, README.md, etc).
+  // Pigeonhole and ROAM pitch pages - root/projects/{pigeonhole,roam} are
+  // submodules (sparse-checked-out to just site/) pointing at their product
+  // repos, so each page lives alongside the product it describes. Only
+  // publish site/ - not the submodules' other tracked files (LICENSE,
+  // README.md, etc).
   eleventyConfig.addPassthroughCopy({ "root/projects/pigeonhole/site": "projects/pigeonhole" });
+  eleventyConfig.addPassthroughCopy({ "root/projects/roam/site": "projects/roam" });
 
   return {
     templateFormats: ["njk"],   // only .njk files are treated as templates

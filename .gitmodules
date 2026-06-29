@@ -1,3 +1,6 @@
 [submodule "root/projects/pigeonhole"]
 	path = root/projects/pigeonhole
 	url = https://github.com/stray-signals/Pigeonhole.git
+[submodule "root/projects/roam"]
+	path = root/projects/roam
+	url = https://github.com/stray-signals/ROAM.git
