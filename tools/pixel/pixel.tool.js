@@ -25,6 +25,13 @@ const ICONS = {
   fill: '<path d="M3 9l5-5 5 5-4 4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M13.5 10.5c1 1.4 1 2.3 0 2.8-1 .2-1.4-1-0-2.8z" fill="currentColor"/>',
   mirror: '<path d="M8 2v12" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M6 4L2 8l4 4zM10 4l4 4-4 4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
   half: '<rect x="3" y="3" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 3h5v10H3z" fill="currentColor"/>',
+  dup: '<rect x="2" y="5" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="6" y="2" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+  del: '<path d="M3 4h10M6 4V2.5h4V4M4.5 4l.8 9.5h5.4l.8-9.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  clear: '<rect x="2.5" y="2.5" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 11.5l7-7" stroke="currentColor" stroke-width="1.4"/>',
+  selall: '<rect x="2.5" y="2.5" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>',
+  left: '<path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+  right: '<path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+  onion: '<rect x="2" y="2" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="6" y="6" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.6"/>',
   undo: '<path d="M6 4L3 7l3 3M3 7h6a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(0 -2)"/>',
   redo: '<path d="M10 4l3 3-3 3M13 7H7a4 4 0 0 0 0 8h2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(0 -2)"/>',
 };
@@ -81,7 +88,6 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
   let bigPlay = false;        // animation playing full size on the main canvas
-  let replaceFrom = -1;       // armed "replace…": palette index being replaced in the selected frames
   let sel = new Set();        // extra selected frames (shift/ctrl-click); the current frame is always selected
   let destroyed = false;
   let stroke = null;          // active pointer stroke
@@ -92,6 +98,15 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   root.innerHTML = `<div class="px-layout">
     <div class="px-strip">
       <div class="px-frames" data-role="frames" role="group" aria-label="frames"></div>
+      <div class="px-fbar" role="toolbar" aria-label="frame actions">
+        <button type="button" class="px-tool" data-role="dup">${icon('dup')}</button>
+        <button type="button" class="px-tool" data-role="del">${icon('del')}</button>
+        <button type="button" class="px-tool" data-role="clear">${icon('clear')}</button>
+        <button type="button" class="px-tool" data-role="selall" aria-pressed="false" aria-label="select all frames" title="select all frames (shift-click a range, ctrl-click to add)">${icon('selall')}</button>
+        <button type="button" class="px-tool" data-role="left" aria-label="move frame left" title="move frame left">${icon('left')}</button>
+        <button type="button" class="px-tool" data-role="right" aria-label="move frame right" title="move frame right">${icon('right')}</button>
+        <button type="button" class="px-tool" data-role="onion" aria-pressed="true" aria-label="onion skin" title="onion skin: show the previous frame faintly while you draw">${icon('onion')}</button>
+      </div>
       <div class="px-play">
         <canvas class="px-playcv" data-role="play" aria-label="play animation full size" role="button" tabindex="0" title="play full size"></canvas>
         <div class="px-playctl">
@@ -110,44 +125,29 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
             <input type="color" data-role="colorin" aria-label="edit selected color"></div></div>
         <div class="px-swatches" data-role="swatches" role="group" aria-label="palette"></div>
         <div class="px-row">
-          <button type="button" class="px-btn" data-role="addcolor">+ add color</button>
           <button type="button" class="px-btn" data-role="loadpal" aria-expanded="false" aria-haspopup="menu">load palette ▾</button>
-          <button type="button" class="px-btn" data-role="replace" aria-pressed="false" title="replace this color in the selected frames with another">replace…</button>
           <button type="button" class="px-btn" data-role="prune" title="remove colors no frame uses">remove unused</button>
         </div>
         <div class="px-list" data-role="pallist" role="menu" aria-label="saved palettes" hidden></div>
       </section>
-      <section class="px-sec" aria-label="frame actions">
-        <div class="px-row">
-          <button type="button" class="px-btn" data-role="dup" title="duplicate frame">duplicate</button>
-          <button type="button" class="px-btn" data-role="del" title="delete frame">delete</button>
-          <button type="button" class="px-btn px-sq" data-role="left" aria-label="move frame left" title="move frame left">←</button>
-          <button type="button" class="px-btn px-sq" data-role="right" aria-label="move frame right" title="move frame right">→</button>
-          <button type="button" class="px-btn" data-role="selall" aria-pressed="false" title="select all frames">select all</button>
-        </div>
-        <div class="px-row">
-          <button type="button" class="px-btn" data-role="onion" aria-pressed="true" title="onion skin: show the previous frame faintly while you draw">onion skin</button>
-          <button type="button" class="px-btn" data-role="clear" title="clear frame">clear frame</button>
-          <button type="button" class="px-btn" data-role="reduce" title="reduce this frame to fewer colors">reduce colors</button>
-        </div>
-      </section>
-      <section class="px-sec" aria-label="canvas size">
+    </div>
+    <div class="px-bar" data-role="bar">
+      <div class="px-row px-sizewrap">
         <div class="px-row" data-role="sizes" role="group" aria-label="canvas size"></div>
         <div class="px-confirm" data-role="confirm" role="alertdialog" aria-label="confirm resize" hidden>
           <span data-role="confirmtext"></span>
           <button type="button" class="px-btn px-btn-fill" data-role="yes">resize</button>
           <button type="button" class="px-btn" data-role="no">cancel</button>
         </div>
-      </section>
-      <section class="px-sec px-exportwrap" aria-label="export">
+      </div>
+      <span class="px-msg" data-role="msg" role="status" aria-live="polite"></span>
+      <div class="px-row px-exportwrap">
         <div class="px-menu" data-role="exportmenu" role="menu" aria-label="export" hidden></div>
         <div class="px-menu" data-role="importmenu" role="menu" aria-label="import" hidden></div>
-        <div class="px-row">
-          <button type="button" class="px-btn" data-role="importbtn" aria-expanded="false" aria-haspopup="menu">import ▾</button>
-          <button type="button" class="px-btn" data-role="exportbtn" aria-expanded="false" aria-haspopup="menu">export ▴</button>
-          <span class="px-msg" data-role="msg" role="status" aria-live="polite"></span>
-        </div>
-      </section>
+        <button type="button" class="px-btn" data-role="reduce" title="reduce the selected frames to fewer colors">reduce colors</button>
+        <button type="button" class="px-btn" data-role="importbtn" aria-expanded="false" aria-haspopup="menu">import ▾</button>
+        <button type="button" class="px-btn" data-role="exportbtn" aria-expanded="false" aria-haspopup="menu">export ▴</button>
+      </div>
     </div>
   </div>`;
   container.appendChild(root);
@@ -156,8 +156,8 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   const el = {
     frames: $('frames'), play: $('play'), playbtn: $('playbtn'), fps: $('fps'), fpsout: $('fpsout'),
     tools: $('tools'), stage: $('stage'), canvas: $('canvas'), big: $('big'), hex: $('hex'), colorin: $('colorin'),
-    swatches: $('swatches'), addcolor: $('addcolor'), loadpal: $('loadpal'), pallist: $('pallist'),
-    dup: $('dup'), del: $('del'), selall: $('selall'), replace: $('replace'), prune: $('prune'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
+    swatches: $('swatches'), loadpal: $('loadpal'), pallist: $('pallist'),
+    dup: $('dup'), del: $('del'), selall: $('selall'), prune: $('prune'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
     sizes: $('sizes'), confirm: $('confirm'), confirmtext: $('confirmtext'), yes: $('yes'), no: $('no'),
     exportmenu: $('exportmenu'), exportbtn: $('exportbtn'), msg: $('msg'),
     importmenu: $('importmenu'), importbtn: $('importbtn'), reduce: $('reduce'), side: $('side'),
@@ -303,14 +303,15 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const ns = sel.size + 1, multiSel = ns > 1;
     el.dup.disabled = n + ns > MAX_FRAMES;
     el.del.disabled = n <= 1 && state.doc.frames[0].every(v => !v);
-    el.dup.textContent = multiSel ? `duplicate ${ns}` : 'duplicate';
-    el.del.textContent = ns >= n && n > 1 ? 'delete all' : multiSel ? `delete ${ns}` : 'delete';
-    el.clear.textContent = multiSel ? `clear ${ns}` : 'clear frame';
+    const tip = (b, t) => { b.title = t; b.setAttribute('aria-label', t); };
+    tip(el.dup, multiSel ? `duplicate ${ns} frames` : 'duplicate frame');
+    tip(el.del, ns >= n && n > 1 ? 'delete all frames' : multiSel ? `delete ${ns} frames` : 'delete frame');
+    tip(el.clear, multiSel ? `clear ${ns} frames` : 'clear frame');
+    root.style.setProperty('--px-nsel', `"${multiSel ? ns : ''}"`);
     el.selall.setAttribute('aria-pressed', String(n > 1 && ns >= n));
     el.selall.disabled = n <= 1;
     el.left.disabled = multiSel || state.frameIdx <= 0;
     el.right.disabled = multiSel || state.frameIdx >= n - 1;
-    el.addcolor.disabled = state.doc.palette.length >= MAX_COLORS;
   }
 
   function renderCanvas() {
@@ -450,29 +451,14 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
         title: (i < 9 ? `${hex} (${i + 1})` : hex) + (inSel.has(i) ? ' · used here' : ''),
       });
       b.addEventListener('click', () => {
-        if (replaceFrom >= 0) {
-          const from = replaceFrom; replaceFrom = -1;
-          if (i !== from) {
-            const idxs = selected();
-            snapshot();
-            for (const fi of idxs) {
-              const f = state.doc.frames[fi];
-              for (let k = 0; k < f.length; k++) if (f[k] && (f[k] & 0x7fff) - 1 === from) f[k] = (i + 1) | (f[k] & HALF);
-            }
-            state.colorIdx = i;
-            changed();
-            flash(idxs.length > 1 ? `replaced in ${idxs.length} frames` : 'replaced');
-            return;
-          }
-        }
         state.colorIdx = i; if (state.tool === 'eraser') state.tool = 'pencil'; syncControls(); renderColors(); scheduleSave();
       });
       el.swatches.appendChild(b);
     });
-    el.replace.disabled = !inSel.has(state.colorIdx) || palette.length < 2;
-    if (el.replace.disabled) replaceFrom = -1;
-    el.replace.setAttribute('aria-pressed', String(replaceFrom >= 0));
-    el.replace.textContent = replaceFrom >= 0 ? 'pick new color' : 'replace…';
+    const add = h('button', { type: 'button', class: 'px-sw px-swadd', text: '+', 'aria-label': 'add color', title: 'add color' });
+    add.disabled = palette.length >= MAX_COLORS;
+    add.addEventListener('click', addColor);
+    el.swatches.appendChild(add);
     const hex = palette[state.colorIdx];
     el.big.style.background = hex;
     el.hex.textContent = hex;
@@ -632,10 +618,6 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   });
   el.colorin.addEventListener('change', () => { colorEditSnap = false; });
 
-  el.replace.addEventListener('click', () => {
-    replaceFrom = replaceFrom >= 0 ? -1 : state.colorIdx;
-    renderColors();
-  });
   el.prune.addEventListener('click', () => {
     const before = snapshotOf(state.doc);
     const n = pruneUnused();
@@ -644,14 +626,14 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     changed();
     flash(`removed ${n} color${n > 1 ? 's' : ''}`);
   });
-  el.addcolor.addEventListener('click', () => {
+  function addColor() {
     if (state.doc.palette.length >= MAX_COLORS) return;
     snapshot();
     state.doc.palette.push(state.doc.palette[state.colorIdx]);
     state.colorIdx = state.doc.palette.length - 1;
     changed();
     el.colorin.focus();
-  });
+  }
 
   function renderPalList() {
     el.pallist.textContent = '';
@@ -1106,7 +1088,6 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
     if (e.key === 'Escape') {
       if (bigPlay) { setBigPlay(false); e.stopPropagation(); return; }
-      if (replaceFrom >= 0) { replaceFrom = -1; renderColors(); e.stopPropagation(); return; }
       if (convPanel && convPanel.isOpen) { convPanel.close(); e.stopPropagation(); return; }
       if (menu || pendingSize) {
         const b = menu === 'palettes' ? el.loadpal : menu === 'import' ? el.importbtn : el.exportbtn;
