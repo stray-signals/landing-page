@@ -16,5 +16,14 @@
     "url": "https://vibes.fish/",
     "copy": "the content is locked behind fish. i caught enough to open some doors. something was playing on the other side. i stayed longer than i expected.",
     "signal_status": "no_endpoint"
+  },
+  {
+    "id": "2026-11-21-funderburg",
+    "type": "drift",
+    "date": "2026-11-21",
+    "target": "chris.funderburg.me",
+    "url": "https://chris.funderburg.me/posts/2026/11/18/six-months-permanent/",
+    "copy": "next door in the ring. a terminal prompt at the top. an old server for a druid community, dragged forward six versions so it wouldn't go dark. a music player named after a spectre. if this reaches you: the static here is friendly.",
+    "signal_status": "pending"
   }
 ]
