@@ -233,6 +233,26 @@ body {
   transition: opacity 0.1s, border-color 0.1s;
 }
 
+/* Webring links: static markup, kept at the right end of the taskbar */
+.webring {
+  order: 99;
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.webring a {
+  color: var(--color-primary);
+  text-decoration: none;
+  opacity: 0.5;
+  transition: opacity 0.1s;
+}
+
+.webring a:hover { opacity: 1; }
+
 .taskbar-item:hover {
   opacity: 1;
   border-color: var(--color-primary);
