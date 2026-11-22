@@ -35,6 +35,7 @@ export const WindowManager = {
 };
 
 // ── CRTWindow ──────────────────────────────────────────────────────
+// CRTWindow.onPageExpand: hook set by app-window.js for windows with data-page
 
 export class CRTWindow {
   constructor(id) {
@@ -67,6 +68,7 @@ export class CRTWindow {
   }
 
   maximize() {
+    if (this.el.dataset.page && CRTWindow.onPageExpand) { CRTWindow.onPageExpand(this); return; }
     if (this.state === 'maximized') { this.restore(); return; }
 
     // Snapshot computed rect so restore always works, even on first maximize

@@ -1,5 +1,6 @@
 import { listTracks } from '../scripts/player.js';
 import { PROJECTS }  from './projects.data.js';
+import { APPS }      from '../scripts/apps.js';
 
 // ── Virtual filesystem ─────────────────────────────────────────────
 // Each node: { type, description?, locked?, children?, listFn? }
@@ -53,6 +54,16 @@ const filesystem = {
               },
             },
           },
+        ])
+      ),
+    },
+    tools: {
+      type:        'dir',
+      description: 'things you can use',
+      children: Object.fromEntries(
+        Object.values(APPS).map(a => [
+          a.id,
+          { type: 'file', kind: 'app', description: a.description, appId: a.id },
         ])
       ),
     },

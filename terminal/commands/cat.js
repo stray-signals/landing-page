@@ -1,3 +1,4 @@
+import { getNode, getCwd } from '../terminal.fs.js';
 import { formatLogEntry, resolveFile, fetchLogEntries, readProjectLog } from './_utils.js';
 
 export default {
@@ -8,6 +9,12 @@ export default {
     const [fileArg, ...rest] = args.split('|').map(s => s.trim());
     const grepMatch = rest[0]?.match(/^grep\s+(\S+)$/);
     const filter    = grepMatch?.[1] ?? null;
+
+    // apps are readable but not log files; check before resolveFile rejects them
+    const appNode = fileArg ? getNode([...getCwd(), fileArg]) : null;
+    if (appNode?.kind === 'app') {
+      return `${appNode.appId}: ${appNode.description}. type "run ${appNode.appId}" to open it.`;
+    }
 
     const { node, error } = resolveFile(fileArg);
     if (error) return `cat: ${error}`;

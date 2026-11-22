@@ -7,6 +7,7 @@ import { getCwdString }                                       from './terminal.f
 import { storePat, clearPat }   from './admin/auth.js';
 import { handleLog }            from './admin/commands/log.js';
 import { openTransmitWindow }   from '../scripts/transmit-window.js';
+import { openApp }              from '../scripts/app-window.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];
 const BASE_PROMPT = timeBlock.prompt;
@@ -75,6 +76,7 @@ async function processCommand(input) {
   let responseText = '';
   if (result?.action === 'clear')          { document.getElementById('commandHistory').innerHTML = ''; }
   else if (result?.action === 'openTransmit') { openTransmitWindow(result.password); }
+  else if (result?.action === 'openApp')   { openApp(result.id); responseText = `opening ${result.id}...`; addMessage('stray', responseText); }
   else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
   else if (result?.action === 'logout')    { deactivateAdmin(); }
   else if (result?.action === 'adminLog')  { handleLog(addMessage); }

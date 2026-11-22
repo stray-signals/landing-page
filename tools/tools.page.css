@@ -1,0 +1,55 @@
+/* Shared styles for standalone tool pages. Does NOT load main.css (it locks the viewport). */
+:root {
+  --color-primary:    #b8ffa0;
+  --color-primary-dim:#b8e4a0;
+  --color-bg:         #0c100c;
+  --color-border:     #2f4f2f;
+  --color-accent:     #6cb03e;
+  --color-accent-hi:  #8fdf5a;
+  --color-text-blue:  #a0c0e0;
+}
+
+@view-transition { navigation: auto; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { min-height: 100%; }
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603) fixed;
+  color: var(--color-primary);
+  font-family: 'Courier New', 'Fira Code', monospace;
+  overflow-y: auto;
+}
+
+/* faint static scanlines, no animation */
+body::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 10;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, 0.12) 2px 3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { display: none; }
+  @view-transition { navigation: none; }
+}
+
+.tools-header {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: 13px;
+}
+.tools-header a { color: var(--color-primary); text-decoration: none; }
+.tools-header a:hover { text-decoration: underline; }
+.tools-header .dim { color: var(--color-primary-dim); opacity: 0.6; }
+.tools-header a:focus-visible { outline: 2px solid var(--color-accent-hi); outline-offset: 2px; }
+
+.tools-page-main {
+  view-transition-name: app-surface;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+.tools-page-main .qr-tool { height: auto; overflow: visible; background: transparent; padding: 0; }

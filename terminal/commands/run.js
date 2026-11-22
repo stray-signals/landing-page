@@ -1,4 +1,5 @@
 import { PROJECTS } from '../projects.data.js';
+import { APPS }     from '../../scripts/apps.js';
 
 export default {
   name:        'run',
@@ -11,10 +12,12 @@ export default {
 
     if (target === 'transmit') return { action: 'openTransmit', password: extra };
 
+    if (APPS[target]) return { action: 'openApp', id: target };
+
     const project = PROJECTS[target];
 
     if (!project) {
-      const available = Object.keys(PROJECTS).join(', ');
+      const available = [...Object.keys(APPS), ...Object.keys(PROJECTS)].join(', ');
       return `run: unknown project "${target}"\navailable: ${available}`;
     }
 

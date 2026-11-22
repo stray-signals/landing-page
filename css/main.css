@@ -8,6 +8,11 @@
   --color-text-blue:  #a0c0e0;
 }
 
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -174,6 +179,15 @@ body {
   width:  clamp(280px, 30vw, 380px);
   height: clamp(340px, 56vh, 540px);
 }
+
+#win-qr {
+  left: clamp(300px, 38vw, 620px);
+  top: max(24px, 4vh);
+  width: clamp(460px, 48vw, 760px);
+  height: clamp(440px, 72vh, 680px);
+}
+
+.app-body { height: 100%; overflow: hidden; }
 
 /* ── Taskbar ───────────────────────────────────────────────────────── */
 #taskbar {

@@ -11,6 +11,8 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("avatar");
   eleventyConfig.addPassthroughCopy("scripts");
   eleventyConfig.addPassthroughCopy("terminal");
+  eleventyConfig.addPassthroughCopy("tools");
+  eleventyConfig.ignores.add("tools/**/*.html");
   eleventyConfig.addPassthroughCopy("root/media");
   eleventyConfig.addPassthroughCopy("root/transmissions/log.json");
   eleventyConfig.addPassthroughCopy("CNAME");

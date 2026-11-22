@@ -1,0 +1,92 @@
+.qr-tool {
+  --qr-warn: #ffc46b;
+  container-type: inline-size;
+  height: 100%;
+  overflow: auto;
+  padding: 16px;
+  color: var(--color-primary);
+  background: var(--color-bg);
+  font-size: 13px;
+}
+.qr-layout { display: flex; flex-direction: column; gap: 20px; }
+.qr-tool *, .qr-tool *::before, .qr-tool *::after { box-sizing: border-box; }
+
+.qr-preview { width: 100%; max-width: 320px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.qr-controls { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.qr-bezel {
+  border: 2px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  border-radius: 14px;
+  padding: 14px;
+  background: #050805;
+}
+.qr-screen { aspect-ratio: 1; display: flex; border-radius: 4px; overflow: hidden; }
+.qr-screen svg { width: 100%; height: 100%; display: block; }
+.qr-empty { margin: auto; color: var(--color-primary-dim); opacity: 0.6; }
+
+.qr-status { min-height: 2.6em; font-size: 12px; line-height: 1.4; }
+.qr-ok { color: var(--color-accent-hi); }
+.qr-warn { color: var(--qr-warn); }
+
+.qr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.qr-btn {
+  font: inherit; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--color-primary); border-radius: 4px; padding: 6px 12px;
+}
+.qr-btn-fill { background: var(--color-primary); color: var(--color-bg); }
+.qr-btn-line { background: transparent; color: var(--color-primary); }
+.qr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.qr-lbl {
+  display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--color-primary-dim); opacity: 0.7; margin-bottom: 5px;
+}
+.qr-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.qr-chip {
+  font: inherit; font-size: 11.5px; cursor: pointer;
+  color: var(--color-primary); background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  border-radius: 4px; padding: 3px 8px;
+}
+.qr-chip.on { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
+.qr-chip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.qr-input {
+  width: 100%; font: inherit; font-size: 13px;
+  color: var(--color-primary); background: #050805;
+  border: 1px solid var(--color-border); border-radius: 4px; padding: 6px 8px;
+}
+.qr-file { margin-top: 6px; padding: 4px; font-size: 11.5px; }
+.qr-file[hidden] { display: none; }
+
+.qr-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.qr-color {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent); border-radius: 6px;
+  padding: 6px 10px 6px 6px; background: #050805;
+}
+.qr-color:hover, .qr-color:focus-within { border-color: var(--color-accent-hi); }
+.qr-color input[type="color"] {
+  flex: 0 0 auto; width: 34px; height: 34px; padding: 0; cursor: pointer;
+  background: none; border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent); border-radius: 4px;
+}
+.qr-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.qr-color input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+.qr-color input[type="color"]::-moz-color-swatch { border: none; border-radius: 3px; }
+.qr-color-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.qr-color-name { font-size: 12px; }
+.qr-hex { font-size: 11px; opacity: 0.6; text-transform: lowercase; }
+
+.qr-range { width: 100%; accent-color: var(--color-accent); }
+
+.qr-tool :is(button, input, select):focus-visible {
+  outline: 2px solid var(--color-accent-hi); outline-offset: 2px;
+}
+.qr-tool a { color: var(--color-text-blue); }
+
+@container (min-width: 620px) {
+  .qr-layout { flex-direction: row; align-items: flex-start; gap: 28px; }
+  .qr-preview { flex: 0 0 min(44%, 440px); max-width: none; margin: 0; position: sticky; top: 0; }
+  .qr-controls { flex: 1; }
+}
+.qr-colors > .qr-chip { align-self: center; justify-self: start; }
