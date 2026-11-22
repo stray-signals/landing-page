@@ -13,6 +13,31 @@ export function addMessage(sender, text) {
   historyDiv.scrollTop = historyDiv.scrollHeight;
 }
 
+export function renderSwatches(colors, label) {
+  const entry = document.createElement('div');
+  entry.className = 'history-entry stray-msg swatches';
+  if (label) {
+    const tag = document.createElement('span');
+    tag.className = 'swatch-label';
+    tag.textContent = label;
+    entry.appendChild(tag);
+  }
+  for (const c of colors) {
+    const cell = document.createElement('span');
+    cell.className = 'swatch';
+    const block = document.createElement('span');
+    block.className = 'swatch-block';
+    block.style.background = c;
+    const label = document.createElement('span');
+    label.className = 'swatch-hex';
+    label.textContent = c;
+    cell.append(block, label);
+    entry.appendChild(cell);
+  }
+  historyDiv.appendChild(entry);
+  historyDiv.scrollTop = historyDiv.scrollHeight;
+}
+
 // ── Cursor ─────────────────────────────────────────────────────────
 export function placeCaretAtEnd(el) {
   el.focus();

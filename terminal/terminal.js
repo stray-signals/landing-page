@@ -1,6 +1,8 @@
 import { REGISTRY }                                          from './commands/index.js';
 import { ADMIN_REGISTRY }                                     from './admin/commands/index.js';
-import { addMessage, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
+import { addMessage, renderSwatches, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
+import { paletteToTheme } from '../tools/palette/palette.color.js';
+import { applySiteTheme, resetSiteTheme } from '../tools/palette/palette.theme.js';
 import { resetIdleTimer }                                     from '../avatar/avatar.js';
 import { getTimeBlock, TIME_BLOCKS }                          from '../scripts/time.js';
 import { getCwdString }                                       from './terminal.fs.js';
@@ -77,6 +79,26 @@ async function processCommand(input) {
   if (result?.action === 'clear')          { document.getElementById('commandHistory').innerHTML = ''; }
   else if (result?.action === 'openTransmit') { openTransmitWindow(result.password); }
   else if (result?.action === 'openApp')   { openApp(result.id); responseText = `opening ${result.id}...`; addMessage('stray', responseText); }
+  else if (result?.action === 'palette')  {
+    renderSwatches(result.colors);
+    responseText = 'here is a palette';
+    addMessage('stray', 'type "run palette" to open the full tool');
+  }
+  else if (result?.action === 'paletteList') {
+    result.palettes.forEach((p, i) => renderSwatches(p.colors, `${i + 1}.`));
+    responseText = 'here are your saved palettes';
+  }
+  else if (result?.action === 'paletteApply') {
+    applySiteTheme(paletteToTheme(result.colors).vars);
+    renderSwatches(result.colors);
+    responseText = `site recolored with ${result.label}.`;
+    addMessage('stray', responseText);
+  }
+  else if (result?.action === 'paletteReset') {
+    resetSiteTheme();
+    responseText = 'site colors back to normal.';
+    addMessage('stray', responseText);
+  }
   else if (result?.action === 'cd')        { promptEl.textContent = buildPrompt(); }
   else if (result?.action === 'logout')    { deactivateAdmin(); }
   else if (result?.action === 'adminLog')  { handleLog(addMessage); }

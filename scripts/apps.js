@@ -10,4 +10,12 @@ export const APPS = {
     description: 'make a qr code',
     mount: (bodyEl) => import('/tools/qr/qr.tool.js').then(m => m.mountQrTool(bodyEl, { mode: 'window' })),
   },
+  palette: {
+    id: 'palette',
+    windowId: 'win-palette',
+    title: 'palette',
+    pageUrl: '/tools/palette/',
+    description: 'make a color palette',
+    mount: (bodyEl) => import('/tools/palette/palette.tool.js').then(m => m.mountPaletteTool(bodyEl, { mode: 'window' })),
+  },
 };

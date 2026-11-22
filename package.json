@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "eleventy",
+    "build": "eleventy && node build/cache-bust.mjs",
     "serve": "eleventy --serve"
   },
   "devDependencies": {

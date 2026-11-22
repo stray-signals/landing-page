@@ -33,7 +33,7 @@ function hslToHex(h, s, l) {
 
 // Derives a full site palette from a single hue, preserving the
 // lightness/saturation relationships of the original green theme.
-function buildPalette(hex) {
+export function buildPalette(hex) {
   const [h] = hexToHsl(hex);
   return {
     '--color-primary':     hslToHex(h, 100, 81),

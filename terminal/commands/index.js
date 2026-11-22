@@ -16,6 +16,7 @@ import freq     from './freq.js';
 import transmit from './transmit.js';
 import mentions from './mentions.js';
 import clear    from './clear.js';
+import palette  from './palette.js';
 
 const commands = [
   whois,
@@ -29,6 +30,7 @@ const commands = [
   transmit,
   mentions,
   clear,
+  palette,
   login,
 ];
 
