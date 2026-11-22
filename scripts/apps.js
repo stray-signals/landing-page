@@ -26,4 +26,12 @@ export const APPS = {
     description: 'draw pixel art',
     mount: (bodyEl) => import('/tools/pixel/pixel.tool.js').then(m => m.mountPixelTool(bodyEl, { mode: 'window' })),
   },
+  transmissions: {
+    id: 'transmissions',
+    windowId: 'win-transmissions',
+    title: 'transmissions',
+    pageUrl: '/transmissions/',
+    description: "read stray's log",
+    mount: (bodyEl) => import('/tools/transmissions/transmissions.tool.js').then(m => m.mountTransmissions(bodyEl)),
+  },
 };

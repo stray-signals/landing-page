@@ -1,0 +1,18 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+{% set sorted = transmissions | sort(true, false, 'date') %}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://straysignals.dev/</loc></url>
+  <url><loc>https://straysignals.dev/transmissions/</loc><lastmod>{{ sorted[0].date }}</lastmod></url>
+  {%- for entry in sorted %}
+  <url><loc>https://straysignals.dev/transmissions/{{ entry.id }}/</loc><lastmod>{{ entry.date }}</lastmod></url>
+  {%- endfor %}
+  <url><loc>https://straysignals.dev/tools/qr/</loc></url>
+  <url><loc>https://straysignals.dev/tools/palette/</loc></url>
+  <url><loc>https://straysignals.dev/tools/pixel/</loc></url>
+  <url><loc>https://straysignals.dev/projects/pigeonhole/</loc></url>
+  <url><loc>https://straysignals.dev/projects/roam/</loc></url>
+</urlset>

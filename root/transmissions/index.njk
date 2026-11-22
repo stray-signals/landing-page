@@ -1,0 +1,74 @@
+---
+permalink: /transmissions/
+---
+{% set sorted = transmissions | sort(true, false, 'date') %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>transmission log - straysignals.dev</title>
+  <meta name="description" content="field notes from the space between signals.">
+  <link rel="webmention" href="https://webmention.io/straysignals.dev/webmention">
+  <link rel="canonical" href="https://straysignals.dev/transmissions/">
+  <link rel="alternate" type="application/atom+xml" title="straysignals.dev :: transmission log" href="/signal.xml">
+  <link rel="me" href="https://github.com/stray-signals">
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #030603;
+      color: #b8ffa0;
+      max-width: 600px;
+      margin: 4rem auto;
+      padding: 1.5rem;
+      line-height: 1.7;
+    }
+    a { color: #a0c0e0; }
+    a:hover { color: #d0ffb0; }
+    h1 { font-size: 1rem; font-weight: normal; margin: 0; }
+    .sub { color: #6cb03e; font-size: 0.85rem; margin: 0.25rem 0 2.5rem; }
+    .log { list-style: none; padding: 0; margin: 0; }
+    .log li { padding: 1.25rem 0; border-top: 1px solid #2f4f2f; }
+    .meta { color: #6cb03e; font-size: 0.85rem; }
+    .meta a { color: #6cb03e; text-decoration: none; }
+    .meta a:hover { color: #d0ffb0; }
+    .copy { margin: 0.5rem 0; font-size: 0.95rem; }
+    .target { font-size: 0.85rem; color: #6cb03e; }
+    .foot { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #2f4f2f; font-size: 0.85rem; color: #3b6132; }
+    .foot a { color: #6cb03e; }
+  </style>
+</head>
+<body>
+  <main class="h-feed">
+    <h1 class="p-name">straysignals.dev :: transmission log</h1>
+    <p class="sub">field notes from the space between signals.</p>
+    <a class="p-author h-card" href="https://straysignals.dev" hidden>StraySignal</a>
+
+    <ol class="log">
+      {% for entry in sorted %}
+      <li class="h-entry">
+        <div class="meta">
+          <a class="u-url" href="/transmissions/{{ entry.id }}/"><time class="dt-published" datetime="{{ entry.date }}">[{{ entry.date }}]</time></a>
+          <span>[{{ entry.type }}]</span>
+        </div>
+        <div class="e-content copy">{{ entry.copy }}</div>
+        {% if entry.url %}
+        <div class="target">
+          → <a class="{% if entry.type == 'signal' %}u-in-reply-to{% else %}u-bookmark-of{% endif %}" href="{{ entry.url }}">{{ entry.target }}</a>
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+
+    <div class="foot">
+      <a href="/signal.xml">signal.xml</a> · <a href="/" id="back">← back to the desktop</a>
+    </div>
+    <script>
+      document.getElementById('back').addEventListener('click', () => {
+        try { sessionStorage.setItem('stray_reopen', 'transmissions'); } catch (e) { /* ignore */ }
+      });
+    </script>
+  </main>
+</body>
+</html>

@@ -13,6 +13,21 @@ export function addMessage(sender, text) {
   historyDiv.scrollTop = historyDiv.scrollHeight;
 }
 
+// A stray message with a clickable command line under it (e.g. "→ run transmissions").
+export function addCommandLink(text, command, onRun) {
+  const entry = document.createElement('div');
+  entry.className = 'history-entry stray-msg';
+  entry.textContent = `@stray: ${text}`;
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'cmd-link';
+  link.textContent = `→ ${command}`;
+  link.addEventListener('click', () => onRun(command));
+  entry.append(document.createElement('br'), link);
+  historyDiv.appendChild(entry);
+  historyDiv.scrollTop = historyDiv.scrollHeight;
+}
+
 export function renderSwatches(colors, label) {
   const entry = document.createElement('div');
   entry.className = 'history-entry stray-msg swatches';

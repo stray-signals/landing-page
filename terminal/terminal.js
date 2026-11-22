@@ -1,6 +1,6 @@
 import { REGISTRY }                                          from './commands/index.js';
 import { ADMIN_REGISTRY }                                     from './admin/commands/index.js';
-import { addMessage, renderSwatches, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
+import { addMessage, addCommandLink, renderSwatches, editableSpan, terminalPanel, promptEl, placeCaretAtEnd } from './terminal.render.js';
 import { paletteToTheme } from '../tools/palette/palette.color.js';
 import { applySiteTheme, resetSiteTheme } from '../tools/palette/palette.theme.js';
 import { resetIdleTimer }                                     from '../avatar/avatar.js';
@@ -10,6 +10,7 @@ import { storePat, clearPat }   from './admin/auth.js';
 import { handleLog }            from './admin/commands/log.js';
 import { openTransmitWindow }   from '../scripts/transmit-window.js';
 import { openApp }              from '../scripts/app-window.js';
+import { loadTransmissions }    from '../tools/transmissions/transmissions.tool.js';
 
 const timeBlock   = TIME_BLOCKS[getTimeBlock()];
 const BASE_PROMPT = timeBlock.prompt;
@@ -150,6 +151,19 @@ promptEl.textContent = buildPrompt();
 timeBlock.greeting.forEach((line, i) => {
   setTimeout(() => addMessage('stray', line), i * 500);
 });
+
+// Mention the newest transmission if it's recent.
+const RECENT_DAYS = 30;
+loadTransmissions().then(([latest]) => {
+  if (!latest) return;
+  const age = (Date.now() - new Date(latest.date + 'T00:00:00').getTime()) / 86400000;
+  if (age > RECENT_DAYS) return;
+  const where = latest.target ? ` ${latest.target}.` : '';
+  setTimeout(() => addCommandLink(`logged something new.${where}`, 'run transmissions', (cmd) => {
+    addMessage('visitor', cmd);
+    processCommand(cmd);
+  }), timeBlock.greeting.length * 500 + 1200);
+}).catch(() => { /* no log, no mention */ });
 
 editableSpan.focus();
 placeCaretAtEnd(editableSpan);
