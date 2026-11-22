@@ -41,6 +41,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
   void getFrameIdx; void getColorIdx;
   let saved = settings;
   let s = cleanConvertSettings(saved);
+  let pruneOn = true;
   let source = null, base = null, into = 'this', framesMode = 'all', plan = null, raf = 0, root = null, removeBg = true, bgColor = null;
   const cleanups = [];
   const ref = {};
@@ -207,6 +208,8 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
       h('div', { class: 'px-sec' }, [ref.bright.row, ref.contrast.row]),
       ref.bgBlock, ref.framesBlock,
       ref.intoBlock = h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'into' }), ref.into.row]),
+      ref.pruneBlock = h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'unused colors' }),
+        (ref.prune = seg([['remove', 'remove'], ['keep', 'keep']], () => (pruneOn ? 'remove' : 'keep'), v => { pruneOn = v === 'remove'; }, 'unused colors')).row]),
       h('div', { class: 'px-row' }, [ref.apply, ref.cancel]),
     ]);
   }
@@ -260,6 +263,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     else if (allMode()) into = 'new';
     else if (full && into === 'new') into = 'this';
     ref.depth.update(); ref.outline.update(); ref.frames.update(); ref.into.update(); ref.bg.update();
+    ref.prune.update(); ref.pruneBlock.hidden = !isFrameSrc();
     ref.bgBlock.hidden = !bgColor;
     ref.into.btns.find(b => b[0] === 'new')[1].disabled = full;
     ref.into.btns.find(b => b[0] === 'this')[1].disabled = allMode();
@@ -325,7 +329,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     }
     const dest = into, palette = s.depth === 'image' ? planned().palette : null;
     persist();
-    onApply({ frames, dest, palette, fps, total, indices });
+    onApply({ frames, dest, palette, fps, total, indices, prune: isFrameSrc() && pruneOn });
     close();
   }
 

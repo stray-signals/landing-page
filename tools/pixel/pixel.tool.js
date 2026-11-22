@@ -81,6 +81,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
   let bigPlay = false;        // animation playing full size on the main canvas
+  let replaceFrom = -1;       // armed "replace…": palette index being replaced in the selected frames
   let sel = new Set();        // extra selected frames (shift/ctrl-click); the current frame is always selected
   let destroyed = false;
   let stroke = null;          // active pointer stroke
@@ -111,6 +112,8 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
         <div class="px-row">
           <button type="button" class="px-btn" data-role="addcolor">+ add color</button>
           <button type="button" class="px-btn" data-role="loadpal" aria-expanded="false" aria-haspopup="menu">load palette ▾</button>
+          <button type="button" class="px-btn" data-role="replace" aria-pressed="false" title="replace this color in the selected frames with another">replace…</button>
+          <button type="button" class="px-btn" data-role="prune" title="remove colors no frame uses">remove unused</button>
         </div>
         <div class="px-list" data-role="pallist" role="menu" aria-label="saved palettes" hidden></div>
       </section>
@@ -154,7 +157,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     frames: $('frames'), play: $('play'), playbtn: $('playbtn'), fps: $('fps'), fpsout: $('fpsout'),
     tools: $('tools'), stage: $('stage'), canvas: $('canvas'), big: $('big'), hex: $('hex'), colorin: $('colorin'),
     swatches: $('swatches'), addcolor: $('addcolor'), loadpal: $('loadpal'), pallist: $('pallist'),
-    dup: $('dup'), del: $('del'), selall: $('selall'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
+    dup: $('dup'), del: $('del'), selall: $('selall'), replace: $('replace'), prune: $('prune'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
     sizes: $('sizes'), confirm: $('confirm'), confirmtext: $('confirmtext'), yes: $('yes'), no: $('no'),
     exportmenu: $('exportmenu'), exportbtn: $('exportbtn'), msg: $('msg'),
     importmenu: $('importmenu'), importbtn: $('importbtn'), reduce: $('reduce'), side: $('side'),
@@ -410,18 +413,66 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
+  // palette indexes (0-based) used in the given frames, or in every frame when idxs is omitted
+  function usedColors(idxs) {
+    const used = new Set(), { frames } = state.doc;
+    for (const fi of idxs || frames.map((_, i) => i)) {
+      const f = frames[fi]; if (!f) continue;
+      for (let i = 0; i < f.length; i++) if (f[i]) used.add((f[i] & 0x7fff) - 1);
+    }
+    return used;
+  }
+
+  // drop palette colors no frame uses and remap the art; returns how many were removed
+  function pruneUnused() {
+    const doc = state.doc, used = usedColors();
+    if (!used.size) return 0;
+    const map = new Map(), pal = [];
+    doc.palette.forEach((hex, i) => { if (used.has(i)) { map.set(i, pal.length); pal.push(hex); } });
+    const removed = doc.palette.length - pal.length;
+    if (!removed) return 0;
+    for (const f of doc.frames) {
+      for (let i = 0; i < f.length; i++) if (f[i]) f[i] = (map.get((f[i] & 0x7fff) - 1) + 1) | (f[i] & HALF);
+    }
+    doc.palette = pal;
+    state.colorIdx = map.has(state.colorIdx) ? map.get(state.colorIdx) : 0;
+    return removed;
+  }
+
   function renderColors() {
     const { palette } = state.doc;
+    const inSel = usedColors(selected());
     el.swatches.textContent = '';
     palette.forEach((hex, i) => {
       const b = h('button', {
-        type: 'button', class: 'px-sw' + (i === state.colorIdx ? ' on' : ''), style: `background:${hex}`,
-        'aria-label': `color ${i + 1}, ${hex}`, 'aria-pressed': String(i === state.colorIdx),
-        title: i < 9 ? `${hex} (${i + 1})` : hex,
+        type: 'button', class: 'px-sw' + (i === state.colorIdx ? ' on' : '') + (inSel.has(i) ? ' used' : ''), style: `background:${hex}`,
+        'aria-label': `color ${i + 1}, ${hex}${inSel.has(i) ? ', used in selected frames' : ''}`, 'aria-pressed': String(i === state.colorIdx),
+        title: (i < 9 ? `${hex} (${i + 1})` : hex) + (inSel.has(i) ? ' · used here' : ''),
       });
-      b.addEventListener('click', () => { state.colorIdx = i; if (state.tool === 'eraser') state.tool = 'pencil'; syncControls(); renderColors(); scheduleSave(); });
+      b.addEventListener('click', () => {
+        if (replaceFrom >= 0) {
+          const from = replaceFrom; replaceFrom = -1;
+          if (i !== from) {
+            const idxs = selected();
+            snapshot();
+            for (const fi of idxs) {
+              const f = state.doc.frames[fi];
+              for (let k = 0; k < f.length; k++) if (f[k] && (f[k] & 0x7fff) - 1 === from) f[k] = (i + 1) | (f[k] & HALF);
+            }
+            state.colorIdx = i;
+            changed();
+            flash(idxs.length > 1 ? `replaced in ${idxs.length} frames` : 'replaced');
+            return;
+          }
+        }
+        state.colorIdx = i; if (state.tool === 'eraser') state.tool = 'pencil'; syncControls(); renderColors(); scheduleSave();
+      });
       el.swatches.appendChild(b);
     });
+    el.replace.disabled = !inSel.has(state.colorIdx) || palette.length < 2;
+    if (el.replace.disabled) replaceFrom = -1;
+    el.replace.setAttribute('aria-pressed', String(replaceFrom >= 0));
+    el.replace.textContent = replaceFrom >= 0 ? 'pick new color' : 'replace…';
     const hex = palette[state.colorIdx];
     el.big.style.background = hex;
     el.hex.textContent = hex;
@@ -567,7 +618,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     let diff = false;
     for (let i = 0; i < f.length; i++) if (f[i] !== s.base[i]) { diff = true; break; }
     if (diff) { history.push(s.before); touched = true; }
-    syncControls(); renderCanvas(); restartPlay(); scheduleSave();
+    syncControls(); renderCanvas(); renderColors(); restartPlay(); scheduleSave();
   }
   el.canvas.addEventListener('pointerup', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
   el.canvas.addEventListener('pointercancel', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
@@ -581,6 +632,18 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   });
   el.colorin.addEventListener('change', () => { colorEditSnap = false; });
 
+  el.replace.addEventListener('click', () => {
+    replaceFrom = replaceFrom >= 0 ? -1 : state.colorIdx;
+    renderColors();
+  });
+  el.prune.addEventListener('click', () => {
+    const before = snapshotOf(state.doc);
+    const n = pruneUnused();
+    if (!n) { flash('no unused colors'); return; }
+    history.push(before); touched = true;
+    changed();
+    flash(`removed ${n} color${n > 1 ? 's' : ''}`);
+  });
   el.addcolor.addEventListener('click', () => {
     if (state.doc.palette.length >= MAX_COLORS) return;
     snapshot();
@@ -622,7 +685,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
 
   // selected frame indexes, ascending (always includes the current frame)
-  const selected = () => [...new Set([...sel, state.frameIdx])].filter(i => i < state.doc.frames.length).sort((a, b) => a - b);
+  function selected() { return [...new Set([...sel, state.frameIdx])].filter(i => i < state.doc.frames.length).sort((a, b) => a - b); }
   el.selall.addEventListener('click', () => {
     const n = state.doc.frames.length;
     if (selected().length >= n) sel.clear();
@@ -805,7 +868,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     return convPanel;
   }
 
-  function applyConvert({ frames, dest, palette, fps, total, indices }) {
+  function applyConvert({ frames, dest, palette, fps, total, indices, prune }) {
     snapshot();
     const doc = state.doc;
     if (palette) doc.palette = palette.slice();
@@ -827,12 +890,14 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     } else { doc.frames[state.frameIdx].set(frames[0]); added = 1; }
     state.frameIdx = first;
     if (dest === 'new') sel.clear();
+    const pruned = prune ? pruneUnused() : 0;
     preview = null; previewPal = null;
     if (fps) { state.fps = fps; }
     changed();
     restartPlay();
     flash(dest === 'new' ? (total > added ? `added ${added} of ${total} frames` : `added ${added} frames`)
       : dest === 'replace' ? `converted ${added} frames` : 'converted');
+    if (pruned) setTimeout(() => flash(`removed ${pruned} unused color${pruned > 1 ? 's' : ''}`), 1200);
   }
 
   function openConvert(src) {
@@ -1041,6 +1106,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
     if (e.key === 'Escape') {
       if (bigPlay) { setBigPlay(false); e.stopPropagation(); return; }
+      if (replaceFrom >= 0) { replaceFrom = -1; renderColors(); e.stopPropagation(); return; }
       if (convPanel && convPanel.isOpen) { convPanel.close(); e.stopPropagation(); return; }
       if (menu || pendingSize) {
         const b = menu === 'palettes' ? el.loadpal : menu === 'import' ? el.importbtn : el.exportbtn;
