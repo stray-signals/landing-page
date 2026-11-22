@@ -1,0 +1,763 @@
+// Pixel art editor UI. mountPixelTool(container, { mode }) -> { destroy }
+import {
+  SIZES, MAX_FRAMES, MAX_COLORS, HALF, createDoc, setPixel, line, rect, floodFill,
+  createHistory, snapshotOf, addFrame, duplicateFrame, deleteFrame, moveFrame, resizeDoc,
+  frameToRGBA, toSpritesheetRGBA, encodeDoc, decodeDoc, toCode, toGif,
+} from '/tools/pixel/pixel.core.js';
+import { getSavedPalettes } from '/tools/palette/palette.theme.js';
+
+const STATE_KEY = 'stray_pixel_state';
+const CSS_HREF = '/tools/pixel/pixel.tool.css';
+const TOOLS = ['pencil', 'eraser', 'line', 'box', 'fill'];
+const TOOL_KEYS = { b: 'pencil', e: 'eraser', l: 'line', r: 'box', g: 'fill' };
+const SCALES = [1, 8, 16];
+
+const ICONS = {
+  pencil: '<path d="M3 13l1-3.5L11 2.5l2.5 2.5-7 7L3 13z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  eraser: '<path d="M3 10l5-6 5 4-4 5H5z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 14h8" stroke="currentColor" stroke-width="1.4"/>',
+  line: '<path d="M3 13L13 3" stroke="currentColor" stroke-width="1.8"/>',
+  box: '<rect x="3" y="4" width="10" height="8" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  boxfill: '<rect x="3" y="4" width="10" height="8" fill="currentColor"/>',
+  fill: '<path d="M3 9l5-5 5 5-4 4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M13.5 10.5c1 1.4 1 2.3 0 2.8-1 .2-1.4-1-0-2.8z" fill="currentColor"/>',
+  mirror: '<path d="M8 2v12" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M6 4L2 8l4 4zM10 4l4 4-4 4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+  half: '<rect x="3" y="3" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 3h5v10H3z" fill="currentColor"/>',
+  undo: '<path d="M6 4L3 7l3 3M3 7h6a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(0 -2)"/>',
+  redo: '<path d="M10 4l3 3-3 3M13 7H7a4 4 0 0 0 0 8h2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(0 -2)"/>',
+};
+const icon = name => `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${ICONS[name]}</svg>`;
+
+function h(tag, props = {}, kids = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of [].concat(kids)) if (c) e.appendChild(c);
+  return e;
+}
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function readSession() {
+  try {
+    const p = JSON.parse(sessionStorage.getItem(STATE_KEY) || 'null');
+    return p && typeof p === 'object' && typeof p.d === 'string' ? p : null;
+  } catch (e) { return null; }
+}
+
+export function mountPixelTool(container, { mode = 'window' } = {}) {
+  if (!document.querySelector('link[href="' + CSS_HREF + '"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = CSS_HREF;
+    document.head.appendChild(link);
+  }
+
+  const state = {
+    doc: createDoc(32), frameIdx: 0, tool: 'pencil', colorIdx: 0, half: false, mirror: false,
+    filled: false, onion: true, fps: 6, playing: true, zoom: 8,
+  };
+  const history = createHistory(100);
+  let touched = false;        // user changed the doc, so a late async load must not replace it
+  let msgTimer = 0, saveTimer = 0, hashTimer = 0, playTimer = 0, playIdx = 0;
+  let menu = null;            // 'export' | 'palettes' | null
+  let pendingSize = 0;        // size awaiting confirmation
+  let destroyed = false;
+  let stroke = null;          // active pointer stroke
+  let colorEditSnap = false;  // snapshot already taken for the current color-input edit
+
+  const root = h('div', { class: 'pixel-tool', tabindex: '-1' });
+  root.dataset.mode = mode;
+  root.innerHTML = `<div class="px-layout">
+    <div class="px-strip">
+      <div class="px-frames" data-role="frames" role="group" aria-label="frames"></div>
+      <div class="px-play">
+        <canvas class="px-playcv" data-role="play" aria-label="animation preview" role="img"></canvas>
+        <div class="px-playctl">
+          <button type="button" class="px-btn px-sq" data-role="playbtn" aria-pressed="true" aria-label="play animation" title="play / pause (space)">⏸</button>
+          <label class="px-fps"><span class="px-lbl">fps</span>
+            <input type="range" min="2" max="12" step="1" data-role="fps" aria-label="frames per second"><output data-role="fpsout"></output></label>
+        </div>
+      </div>
+    </div>
+    <div class="px-tools" data-role="tools" role="toolbar" aria-label="drawing tools"></div>
+    <div class="px-stage" data-role="stage"><canvas class="px-canvas" data-role="canvas" role="img"></canvas></div>
+    <div class="px-side" data-role="side">
+      <section class="px-sec" aria-label="colors">
+        <div class="px-cur"><div class="px-big" data-role="big"></div>
+          <div class="px-curinfo"><span data-role="hex" class="px-hex"></span>
+            <input type="color" data-role="colorin" aria-label="edit selected color"></div></div>
+        <div class="px-swatches" data-role="swatches" role="group" aria-label="palette"></div>
+        <div class="px-row">
+          <button type="button" class="px-btn" data-role="addcolor">+ add color</button>
+          <button type="button" class="px-btn" data-role="loadpal" aria-expanded="false" aria-haspopup="menu">load palette ▾</button>
+        </div>
+        <div class="px-list" data-role="pallist" role="menu" aria-label="saved palettes" hidden></div>
+      </section>
+      <section class="px-sec" aria-label="frame actions">
+        <div class="px-row">
+          <button type="button" class="px-btn" data-role="dup" title="duplicate frame">duplicate</button>
+          <button type="button" class="px-btn" data-role="del" title="delete frame">delete</button>
+          <button type="button" class="px-btn px-sq" data-role="left" aria-label="move frame left" title="move frame left">←</button>
+          <button type="button" class="px-btn px-sq" data-role="right" aria-label="move frame right" title="move frame right">→</button>
+        </div>
+        <div class="px-row">
+          <button type="button" class="px-btn" data-role="onion" aria-pressed="true" title="onion skin: show previous frame">onion skin</button>
+          <button type="button" class="px-btn" data-role="clear" title="clear frame">clear frame</button>
+        </div>
+      </section>
+      <section class="px-sec" aria-label="canvas size">
+        <div class="px-row" data-role="sizes" role="group" aria-label="canvas size"></div>
+        <div class="px-confirm" data-role="confirm" role="alertdialog" aria-label="confirm resize" hidden>
+          <span data-role="confirmtext"></span>
+          <button type="button" class="px-btn px-btn-fill" data-role="yes">resize</button>
+          <button type="button" class="px-btn" data-role="no">cancel</button>
+        </div>
+      </section>
+      <section class="px-sec px-exportwrap" aria-label="export">
+        <div class="px-menu" data-role="exportmenu" role="menu" aria-label="export" hidden></div>
+        <div class="px-row">
+          <button type="button" class="px-btn" data-role="exportbtn" aria-expanded="false" aria-haspopup="menu">export ▴</button>
+          <span class="px-msg" data-role="msg" role="status" aria-live="polite"></span>
+        </div>
+      </section>
+    </div>
+  </div>`;
+  container.appendChild(root);
+
+  const $ = r => root.querySelector(`[data-role="${r}"]`);
+  const el = {
+    frames: $('frames'), play: $('play'), playbtn: $('playbtn'), fps: $('fps'), fpsout: $('fpsout'),
+    tools: $('tools'), stage: $('stage'), canvas: $('canvas'), big: $('big'), hex: $('hex'), colorin: $('colorin'),
+    swatches: $('swatches'), addcolor: $('addcolor'), loadpal: $('loadpal'), pallist: $('pallist'),
+    dup: $('dup'), del: $('del'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
+    sizes: $('sizes'), confirm: $('confirm'), confirmtext: $('confirmtext'), yes: $('yes'), no: $('no'),
+    exportmenu: $('exportmenu'), exportbtn: $('exportbtn'), msg: $('msg'),
+  };
+  const ctx = el.canvas.getContext('2d');
+  const playCtx = el.play.getContext('2d');
+  const scratch = document.createElement('canvas');
+  const sctx = scratch.getContext('2d');
+
+  // ── helpers ─────────────────────────────────────────────────────
+  const cur = () => state.doc.frames[state.frameIdx];
+  const valueNow = () => (state.colorIdx + 1) | (state.half ? HALF : 0);
+  const toolValue = () => (state.tool === 'eraser' ? 0 : valueNow());
+
+  function flash(text) {
+    el.msg.textContent = text;
+    el.msg.classList.add('on');
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(() => { el.msg.classList.remove('on'); }, 2200);
+  }
+
+  function putRGBA(canvas, c, rgba, w, h) {
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+    c.putImageData(new ImageData(rgba, w, h), 0, 0);
+  }
+
+  // ── persistence ─────────────────────────────────────────────────
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 200);
+    if (mode === 'page') {
+      clearTimeout(hashTimer);
+      hashTimer = setTimeout(async () => {
+        try {
+          const enc = await encodeDoc(state.doc);
+          if (!destroyed) history_replace(enc);
+        } catch (e) { /* ignore */ }
+      }, 500);
+    }
+  }
+  function history_replace(enc) {
+    try { window.history.replaceState(null, '', '#' + enc); } catch (e) { /* ignore */ }
+  }
+  async function saveNow() {
+    try {
+      const d = await encodeDoc(state.doc);
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({
+        d, fi: state.frameIdx, tool: state.tool, ci: state.colorIdx, half: state.half,
+        mirror: state.mirror, filled: state.filled, onion: state.onion, fps: state.fps,
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  async function loadInitial() {
+    let doc = null, sess = readSession();
+    if (mode === 'page' && location.hash.length > 1) doc = await decodeDoc(location.hash.slice(1));
+    if (!doc && sess) doc = await decodeDoc(sess.d);
+    if (!doc || touched || destroyed) return;
+    state.doc = doc;
+    if (sess) {
+      if (TOOLS.includes(sess.tool)) state.tool = sess.tool;
+      if (Number.isInteger(sess.fi) && sess.fi >= 0 && sess.fi < doc.frames.length) state.frameIdx = sess.fi;
+      if (Number.isInteger(sess.ci) && sess.ci >= 0 && sess.ci < doc.palette.length) state.colorIdx = sess.ci;
+      state.half = !!sess.half; state.mirror = !!sess.mirror; state.filled = !!sess.filled;
+      if (typeof sess.onion === 'boolean') state.onion = sess.onion;
+      if (Number.isInteger(sess.fps) && sess.fps >= 2 && sess.fps <= 12) state.fps = sess.fps;
+    }
+    fitZoom();
+    refreshAll();
+  }
+
+  // ── doc mutation ────────────────────────────────────────────────
+  function snapshot() { history.push(snapshotOf(state.doc)); touched = true; }
+  function changed() { refreshAll(); scheduleSave(); }
+
+  function applySnapshot(s) {
+    if (!s) return;
+    state.doc.w = s.w; state.doc.h = s.h; state.doc.palette = s.palette; state.doc.frames = s.frames;
+    state.frameIdx = Math.min(state.frameIdx, s.frames.length - 1);
+    state.colorIdx = Math.min(state.colorIdx, s.palette.length - 1);
+    pendingSize = 0;
+    fitZoom();
+    changed();
+  }
+  function undo() { if (history.canUndo) { touched = true; applySnapshot(history.undo(snapshotOf(state.doc))); } }
+  function redo() { if (history.canRedo) { touched = true; applySnapshot(history.redo(snapshotOf(state.doc))); } }
+
+  // ── tools column ────────────────────────────────────────────────
+  const toolDefs = [
+    { id: 'pencil', icon: 'pencil', label: 'pencil', key: 'B' },
+    { id: 'eraser', icon: 'eraser', label: 'eraser', key: 'E' },
+    { id: 'line', icon: 'line', label: 'line', key: 'L' },
+    { id: 'box', icon: 'box', label: 'box', key: 'R' },
+    { id: 'filled', icon: 'boxfill', label: 'filled box', key: 'shift+R', toggle: true },
+    { id: 'fill', icon: 'fill', label: 'fill', key: 'G' },
+    { sep: true },
+    { id: 'mirror', icon: 'mirror', label: 'mirror', key: 'M', toggle: true },
+    { id: 'half', icon: 'half', label: 'half-tone (50% alpha)', key: 'H', toggle: true },
+    { sep: true },
+    { id: 'undo', icon: 'undo', label: 'undo', key: 'ctrl+Z', action: true },
+    { id: 'redo', icon: 'redo', label: 'redo', key: 'ctrl+shift+Z / ctrl+Y', action: true },
+  ];
+  const toolBtns = {};
+  for (const d of toolDefs) {
+    if (d.sep) { el.tools.appendChild(h('span', { class: 'px-sep', 'aria-hidden': 'true' })); continue; }
+    const b = h('button', { type: 'button', class: 'px-tool', 'aria-label': d.label, title: `${d.label} (${d.key})` });
+    if (!d.action) b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = icon(d.icon);
+    b.addEventListener('click', () => toolAction(d.id));
+    toolBtns[d.id] = b;
+    el.tools.appendChild(b);
+  }
+  function toolAction(id) {
+    if (TOOLS.includes(id)) state.tool = id;
+    else if (id === 'filled') { state.filled = !state.filled; if (state.filled) state.tool = 'box'; }
+    else if (id === 'mirror') state.mirror = !state.mirror;
+    else if (id === 'half') state.half = !state.half;
+    else if (id === 'undo') return undo();
+    else if (id === 'redo') return redo();
+    syncControls(); renderCanvas(); scheduleSave();
+  }
+
+  // ── rendering ───────────────────────────────────────────────────
+  function syncControls() {
+    for (const t of TOOLS) toolBtns[t].setAttribute('aria-pressed', String(state.tool === t));
+    toolBtns.filled.setAttribute('aria-pressed', String(state.filled));
+    toolBtns.mirror.setAttribute('aria-pressed', String(state.mirror));
+    toolBtns.half.setAttribute('aria-pressed', String(state.half));
+    toolBtns.undo.disabled = !history.canUndo;
+    toolBtns.redo.disabled = !history.canRedo;
+    el.onion.setAttribute('aria-pressed', String(state.onion));
+    el.playbtn.setAttribute('aria-pressed', String(state.playing));
+    el.playbtn.textContent = state.playing ? '⏸' : '▶';
+    el.playbtn.setAttribute('aria-label', state.playing ? 'pause animation' : 'play animation');
+    el.fps.value = String(state.fps);
+    el.fpsout.textContent = String(state.fps);
+    const n = state.doc.frames.length;
+    el.dup.disabled = n >= MAX_FRAMES;
+    el.del.disabled = n <= 1;
+    el.left.disabled = state.frameIdx <= 0;
+    el.right.disabled = state.frameIdx >= n - 1;
+    el.addcolor.disabled = state.doc.palette.length >= MAX_COLORS;
+  }
+
+  function renderCanvas() {
+    const { w, h: ht } = state.doc;
+    const z = state.zoom;
+    const cw = w * z, ch = ht * z;
+    if (el.canvas.width !== cw || el.canvas.height !== ch) { el.canvas.width = cw; el.canvas.height = ch; }
+    el.canvas.style.width = cw + 'px';
+    el.canvas.style.height = ch + 'px';
+    el.canvas.style.setProperty('--z', z + 'px');
+    el.canvas.setAttribute('aria-label', `pixel canvas, frame ${state.frameIdx + 1} of ${state.doc.frames.length}`);
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, cw, ch);
+    scratch.width = w; scratch.height = ht;
+    if (state.onion && state.frameIdx > 0) {
+      sctx.putImageData(new ImageData(frameToRGBA(state.doc, state.frameIdx - 1), w, ht), 0, 0);
+      ctx.globalAlpha = 0.25;
+      ctx.drawImage(scratch, 0, 0, cw, ch);
+      ctx.globalAlpha = 1;
+    }
+    sctx.putImageData(new ImageData(frameToRGBA(state.doc, state.frameIdx), w, ht), 0, 0);
+    ctx.drawImage(scratch, 0, 0, cw, ch);
+    if (z >= 8) {
+      ctx.strokeStyle = 'rgba(184, 255, 160, 0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 1; i < w; i++) { ctx.moveTo(i * z + 0.5, 0); ctx.lineTo(i * z + 0.5, ch); }
+      for (let i = 1; i < ht; i++) { ctx.moveTo(0, i * z + 0.5); ctx.lineTo(cw, i * z + 0.5); }
+      ctx.stroke();
+    }
+    if (state.mirror) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cw / 2, 0); ctx.lineTo(cw / 2, ch); ctx.stroke();
+      ctx.restore();
+    }
+    updateThumb(state.frameIdx);
+  }
+
+  let thumbRaf = 0;
+  function updateThumb(i) {
+    cancelAnimationFrame(thumbRaf);
+    thumbRaf = requestAnimationFrame(() => {
+      const b = el.frames.children[i];
+      const cv = b && b.querySelector && b.querySelector('canvas');
+      if (cv && state.doc.frames[i]) putRGBA(cv, cv.getContext('2d'), frameToRGBA(state.doc, i), state.doc.w, state.doc.h);
+    });
+  }
+
+  function renderStrip() {
+    el.frames.textContent = '';
+    const { doc } = state;
+    doc.frames.forEach((_, i) => {
+      const cv = h('canvas', { class: 'px-thumb', width: String(doc.w), height: String(doc.h), 'aria-hidden': 'true' });
+      putRGBA(cv, cv.getContext('2d'), frameToRGBA(doc, i), doc.w, doc.h);
+      const b = h('button', {
+        type: 'button', class: 'px-fr' + (i === state.frameIdx ? ' on' : ''),
+        'aria-label': `frame ${i + 1}`, 'aria-pressed': String(i === state.frameIdx),
+      }, [cv, h('span', { text: String(i + 1) })]);
+      b.addEventListener('click', () => { state.frameIdx = i; refreshAll(); scheduleSave(); });
+      el.frames.appendChild(b);
+    });
+    const add = h('button', { type: 'button', class: 'px-fr px-add', 'aria-label': 'add frame', title: 'add frame after current', text: '+' });
+    add.disabled = doc.frames.length >= MAX_FRAMES;
+    add.addEventListener('click', () => {
+      snapshot();
+      const i = addFrame(state.doc, state.frameIdx);
+      if (i >= 0) state.frameIdx = i;
+      changed();
+    });
+    el.frames.appendChild(add);
+    const on = el.frames.children[state.frameIdx];
+    if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function renderColors() {
+    const { palette } = state.doc;
+    el.swatches.textContent = '';
+    palette.forEach((hex, i) => {
+      const b = h('button', {
+        type: 'button', class: 'px-sw' + (i === state.colorIdx ? ' on' : ''), style: `background:${hex}`,
+        'aria-label': `color ${i + 1}, ${hex}`, 'aria-pressed': String(i === state.colorIdx),
+        title: i < 9 ? `${hex} (${i + 1})` : hex,
+      });
+      b.addEventListener('click', () => { state.colorIdx = i; if (state.tool === 'eraser') state.tool = 'pencil'; syncControls(); renderColors(); scheduleSave(); });
+      el.swatches.appendChild(b);
+    });
+    const hex = palette[state.colorIdx];
+    el.big.style.background = hex;
+    el.hex.textContent = hex;
+    el.colorin.value = hex;
+  }
+
+  function renderSizes() {
+    el.sizes.textContent = '';
+    for (const s of SIZES) {
+      const b = h('button', {
+        type: 'button', class: 'px-btn', text: `${s}`, 'aria-label': `canvas size ${s} by ${s}`,
+        'aria-pressed': String(state.doc.w === s),
+      });
+      b.addEventListener('click', () => {
+        if (s === state.doc.w) { pendingSize = 0; renderConfirm(); return; }
+        pendingSize = s; renderConfirm();
+        el.yes.focus();
+      });
+      el.sizes.appendChild(b);
+    }
+    renderConfirm();
+  }
+  function renderConfirm() {
+    el.confirm.hidden = !pendingSize;
+    if (pendingSize) el.confirmtext.textContent = `resize to ${pendingSize}×${pendingSize}? art is kept top-left / cropped.`;
+  }
+
+  function refreshAll() {
+    if (destroyed) return;
+    syncControls(); renderStrip(); renderColors(); renderSizes(); renderCanvas(); restartPlay();
+  }
+
+  // ── zoom to fit ─────────────────────────────────────────────────
+  function fitZoom() {
+    const aw = el.stage.clientWidth - 16, ah = el.stage.clientHeight - 16;
+    if (aw <= 0 || ah <= 0) return;
+    const z = Math.max(1, Math.min(24, Math.floor(Math.min(aw, ah) / state.doc.w)));
+    if (z !== state.zoom) { state.zoom = z; renderCanvas(); }
+  }
+  let ro = null;
+  if (window.ResizeObserver) { ro = new ResizeObserver(() => fitZoom()); ro.observe(el.stage); }
+
+  // ── play preview ────────────────────────────────────────────────
+  function drawPlay() {
+    const { doc } = state;
+    const i = state.playing ? playIdx % doc.frames.length : state.frameIdx;
+    putRGBA(el.play, playCtx, frameToRGBA(doc, i), doc.w, doc.h);
+  }
+  function restartPlay() {
+    clearTimeout(playTimer);
+    playIdx = state.playing ? playIdx % state.doc.frames.length : 0;
+    drawPlay();
+    if (!state.playing || state.doc.frames.length < 2) return;
+    const tick = () => {
+      playIdx = (playIdx + 1) % state.doc.frames.length;
+      drawPlay();
+      playTimer = setTimeout(tick, 1000 / state.fps);
+    };
+    playTimer = setTimeout(tick, 1000 / state.fps);
+  }
+  function togglePlay() { state.playing = !state.playing; syncControls(); restartPlay(); scheduleSave(); }
+  el.playbtn.addEventListener('click', togglePlay);
+  el.fps.addEventListener('input', () => {
+    state.fps = Math.max(2, Math.min(12, Number(el.fps.value) || 6));
+    el.fpsout.textContent = String(state.fps);
+    restartPlay(); scheduleSave();
+  });
+  // keep the preview animating while the current frame is edited
+  const playRefreshTimer = setInterval(() => { if (state.playing) drawPlay(); }, 400);
+
+  // ── drawing on the canvas ───────────────────────────────────────
+  function cellAt(e) {
+    const r = el.canvas.getBoundingClientRect();
+    const { w, h: ht } = state.doc;
+    return [
+      Math.max(0, Math.min(w - 1, Math.floor((e.clientX - r.left) / r.width * w))),
+      Math.max(0, Math.min(ht - 1, Math.floor((e.clientY - r.top) / r.height * ht))),
+    ];
+  }
+
+  function pick(x, y) {
+    const v = cur()[y * state.doc.w + x];
+    if (!v) return;
+    state.colorIdx = (v & 0x7fff) - 1;
+    state.half = !!(v & HALF);
+    if (state.tool === 'eraser') state.tool = 'pencil';
+    syncControls(); renderColors(); scheduleSave();
+  }
+
+  function drawShape(s, x, y) {
+    const f = cur(), { w, h: ht } = state.doc;
+    f.set(s.base);
+    const o = { mirror: state.mirror };
+    if (state.tool === 'line') line(f, w, ht, s.x0, s.y0, x, y, s.value, o);
+    else rect(f, w, ht, s.x0, s.y0, x, y, s.value, { mirror: state.mirror, filled: state.filled });
+  }
+
+  el.canvas.addEventListener('contextmenu', e => e.preventDefault());
+  el.canvas.addEventListener('pointerdown', e => {
+    if (stroke) return;
+    const [x, y] = cellAt(e);
+    if (e.button === 2 || (e.button === 0 && e.altKey)) { e.preventDefault(); pick(x, y); return; }
+    if (e.button !== 0) return;
+    e.preventDefault();
+    closeMenus();
+    const { w, h: ht } = state.doc, f = cur(), value = toolValue();
+    stroke = { id: e.pointerId, before: snapshotOf(state.doc), x0: x, y0: y, lx: x, ly: y, value, base: f.slice() };
+    try { el.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    if (state.tool === 'pencil' || state.tool === 'eraser') setPixel(f, w, ht, x, y, value, { mirror: state.mirror });
+    else if (state.tool === 'fill') floodFill(f, w, ht, x, y, value, { mirror: state.mirror });
+    else drawShape(stroke, x, y);
+    renderCanvas();
+    if (state.tool === 'fill') endStroke();
+  });
+  el.canvas.addEventListener('pointermove', e => {
+    if (!stroke || e.pointerId !== stroke.id) return;
+    const [x, y] = cellAt(e);
+    if (x === stroke.lx && y === stroke.ly) return;
+    const { w, h: ht } = state.doc;
+    if (state.tool === 'pencil' || state.tool === 'eraser') {
+      line(cur(), w, ht, stroke.lx, stroke.ly, x, y, stroke.value, { mirror: state.mirror });
+    } else if (state.tool === 'line' || state.tool === 'box') drawShape(stroke, x, y);
+    stroke.lx = x; stroke.ly = y;
+    renderCanvas();
+  });
+  function endStroke() {
+    if (!stroke) return;
+    const s = stroke; stroke = null;
+    const f = cur();
+    let diff = false;
+    for (let i = 0; i < f.length; i++) if (f[i] !== s.base[i]) { diff = true; break; }
+    if (diff) { history.push(s.before); touched = true; }
+    syncControls(); renderCanvas(); restartPlay(); scheduleSave();
+  }
+  el.canvas.addEventListener('pointerup', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
+  el.canvas.addEventListener('pointercancel', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
+  el.canvas.addEventListener('lostpointercapture', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
+
+  // ── right column actions ────────────────────────────────────────
+  el.colorin.addEventListener('input', () => {
+    if (!colorEditSnap) { snapshot(); colorEditSnap = true; }
+    state.doc.palette[state.colorIdx] = el.colorin.value.toLowerCase();
+    syncControls(); renderColors(); renderCanvas(); renderStrip(); drawPlay(); scheduleSave();
+  });
+  el.colorin.addEventListener('change', () => { colorEditSnap = false; });
+
+  el.addcolor.addEventListener('click', () => {
+    if (state.doc.palette.length >= MAX_COLORS) return;
+    snapshot();
+    state.doc.palette.push(state.doc.palette[state.colorIdx]);
+    state.colorIdx = state.doc.palette.length - 1;
+    changed();
+    el.colorin.focus();
+  });
+
+  function renderPalList() {
+    el.pallist.textContent = '';
+    const saved = getSavedPalettes();
+    if (!saved.length) {
+      el.pallist.appendChild(h('div', { class: 'px-empty', text: 'no saved palettes. make one with run palette.' }));
+      return;
+    }
+    for (const p of saved) {
+      const strip = h('button', {
+        type: 'button', class: 'px-strippal', role: 'menuitem',
+        'aria-label': 'load palette ' + p.colors.join(' '),
+      }, p.colors.map(c => h('span', { style: `background:${c}` })));
+      strip.addEventListener('click', () => {
+        snapshot();
+        const n = p.colors.length;
+        state.doc.palette = p.colors.map(c => c.toLowerCase());
+        for (const f of state.doc.frames) {
+          for (let i = 0; i < f.length; i++) {
+            const v = f[i];
+            if (v && (v & 0x7fff) > n) f[i] = n | (v & HALF);
+          }
+        }
+        state.colorIdx = Math.min(state.colorIdx, n - 1);
+        closeMenus();
+        changed();
+        flash('palette loaded');
+      });
+      el.pallist.appendChild(strip);
+    }
+  }
+
+  el.dup.addEventListener('click', () => {
+    if (state.doc.frames.length >= MAX_FRAMES) return;
+    snapshot(); state.frameIdx = duplicateFrame(state.doc, state.frameIdx); changed();
+  });
+  el.del.addEventListener('click', () => {
+    if (state.doc.frames.length <= 1) return;
+    snapshot(); state.frameIdx = deleteFrame(state.doc, state.frameIdx); changed();
+  });
+  el.left.addEventListener('click', () => {
+    if (state.frameIdx <= 0) return;
+    snapshot(); state.frameIdx = moveFrame(state.doc, state.frameIdx, state.frameIdx - 1); changed();
+  });
+  el.right.addEventListener('click', () => {
+    if (state.frameIdx >= state.doc.frames.length - 1) return;
+    snapshot(); state.frameIdx = moveFrame(state.doc, state.frameIdx, state.frameIdx + 1); changed();
+  });
+  el.onion.addEventListener('click', () => { state.onion = !state.onion; syncControls(); renderCanvas(); scheduleSave(); });
+  el.clear.addEventListener('click', () => { snapshot(); cur().fill(0); changed(); });
+  el.yes.addEventListener('click', () => {
+    if (!pendingSize) return;
+    snapshot();
+    resizeDoc(state.doc, pendingSize);
+    pendingSize = 0;
+    fitZoom();
+    changed();
+  });
+  el.no.addEventListener('click', () => { pendingSize = 0; renderConfirm(); });
+
+  // ── menus: load palette, export ─────────────────────────────────
+  function closeMenus() {
+    menu = null;
+    el.pallist.hidden = true; el.exportmenu.hidden = true;
+    el.loadpal.setAttribute('aria-expanded', 'false');
+    el.exportbtn.setAttribute('aria-expanded', 'false');
+  }
+  function openMenu(name) {
+    const was = menu;
+    closeMenus();
+    if (was === name) return;
+    menu = name;
+    if (name === 'palettes') {
+      renderPalList(); el.pallist.hidden = false; el.loadpal.setAttribute('aria-expanded', 'true');
+      const f = el.pallist.querySelector('button'); if (f) f.focus();
+    } else {
+      renderExportMenu(); el.exportmenu.hidden = false; el.exportbtn.setAttribute('aria-expanded', 'true');
+      const f = el.exportmenu.querySelector('button'); if (f) f.focus();
+    }
+  }
+  el.loadpal.addEventListener('click', () => openMenu('palettes'));
+  el.exportbtn.addEventListener('click', () => openMenu('export'));
+
+  let pngScale = 8;
+  function renderExportMenu() {
+    const m = el.exportmenu;
+    m.textContent = '';
+    const scaleSel = h('select', { class: 'px-sel', 'aria-label': 'png scale' },
+      SCALES.map(s => h('option', { value: String(s), text: `${s}×`, selected: s === pngScale })));
+    scaleSel.addEventListener('change', () => { pngScale = Number(scaleSel.value) || 8; });
+    m.appendChild(h('label', { class: 'px-scalerow' }, [h('span', { class: 'px-lbl', text: 'png scale' }), scaleSel]));
+    const items = [
+      ['download png', downloadPng],
+      ['download spritesheet png', downloadSheet],
+      ['download gif', downloadGif],
+      ['copy as code', () => copyText(toCode(state.doc, state.frameIdx), 'code')],
+      ['copy share link', copyShare],
+    ];
+    for (const [label, fn] of items) {
+      const b = h('button', { type: 'button', class: 'px-item', role: 'menuitem', text: label });
+      b.addEventListener('click', () => { closeMenus(); fn(); });
+      m.appendChild(b);
+    }
+  }
+
+  function copyText(text, label) {
+    const fallback = () => {
+      const m = el.exportmenu;
+      m.textContent = '';
+      const ta = h('textarea', { class: 'px-fallback', readonly: true, 'aria-label': `${label}, press ctrl+c to copy`, rows: '6' });
+      ta.value = text;
+      const done = h('button', { type: 'button', class: 'px-btn', text: 'done' });
+      done.addEventListener('click', () => closeMenus());
+      m.append(h('div', { class: 'px-lbl', text: 'press ctrl+c to copy' }), ta, done);
+      m.hidden = false; menu = 'export';
+      el.exportbtn.setAttribute('aria-expanded', 'true');
+      ta.focus(); ta.select();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => flash(`copied ${label}`), fallback);
+    } else fallback();
+  }
+
+  function canvasBlob(rgba, w, hgt, scale, name) {
+    const src = document.createElement('canvas');
+    src.width = w; src.height = hgt;
+    src.getContext('2d').putImageData(new ImageData(rgba, w, hgt), 0, 0);
+    const out = document.createElement('canvas');
+    out.width = w * scale; out.height = hgt * scale;
+    const c = out.getContext('2d');
+    c.imageSmoothingEnabled = false;
+    c.drawImage(src, 0, 0, out.width, out.height);
+    out.toBlob(b => { if (b) { download(b, name); flash('downloaded ' + name); } }, 'image/png');
+  }
+  function downloadPng() {
+    const { doc } = state;
+    canvasBlob(frameToRGBA(doc, state.frameIdx), doc.w, doc.h, pngScale, `pixel-frame${state.frameIdx + 1}-${pngScale}x.png`);
+  }
+  function downloadSheet() {
+    const s = toSpritesheetRGBA(state.doc);
+    canvasBlob(s.data, s.width, s.height, 8, 'pixel-spritesheet-8x.png');
+  }
+  function downloadGif() {
+    try {
+      const bytes = toGif(state.doc, { scale: 8, fps: state.fps });
+      download(new Blob([bytes], { type: 'image/gif' }), 'pixel.gif');
+      flash('downloaded pixel.gif');
+    } catch (e) { flash('gif failed'); }
+  }
+  async function copyShare() {
+    try {
+      const enc = await encodeDoc(state.doc);
+      copyText(location.origin + '/tools/pixel/#' + enc, 'share link');
+    } catch (e) { flash('share failed'); }
+  }
+
+  // ── keyboard / outside clicks ───────────────────────────────────
+  function onKey(e) {
+    const t = e.target;
+    const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
+    if (e.key === 'Escape') {
+      if (menu || pendingSize) {
+        const b = menu === 'palettes' ? el.loadpal : el.exportbtn;
+        const hadMenu = !!menu;
+        pendingSize = 0; renderConfirm(); closeMenus();
+        if (hadMenu) b.focus();
+        e.stopPropagation();
+      }
+      return;
+    }
+    if (e.key === ' ' || e.code === 'Space') {
+      if (t && t.closest && t.closest('input, textarea, select, button, [contenteditable]')) return;
+      e.preventDefault();
+      togglePlay();
+      return;
+    }
+    if (inField) return;
+    const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      if (k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+      else if (k === 'y') { e.preventDefault(); redo(); }
+      return;
+    }
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (k === 'r' && e.shiftKey) { e.preventDefault(); state.filled = !state.filled; state.tool = 'box'; syncControls(); renderCanvas(); scheduleSave(); return; }
+    if (TOOL_KEYS[k] && !e.shiftKey) { e.preventDefault(); toolAction(TOOL_KEYS[k]); return; }
+    if (k === 'm') { e.preventDefault(); toolAction('mirror'); return; }
+    if (k === 'h') { e.preventDefault(); toolAction('half'); return; }
+    if (/^[1-9]$/.test(e.key)) {
+      const i = Number(e.key) - 1;
+      if (i < state.doc.palette.length) {
+        e.preventDefault();
+        state.colorIdx = i; if (state.tool === 'eraser') state.tool = 'pencil';
+        syncControls(); renderColors(); scheduleSave();
+      }
+    }
+  }
+  const keyTarget = mode === 'page' ? document : root;
+  keyTarget.addEventListener('keydown', onKey);
+
+  const onPointerDown = e => {
+    if (!root.contains(e.target)) return;
+    if (!e.target.closest('input, textarea, select')) root.focus({ preventScroll: true });
+  };
+  root.addEventListener('pointerdown', onPointerDown);
+
+  const onDocDown = e => {
+    if (!menu || !root.contains(e.target)) return;
+    if (!e.target.closest('.px-menu, .px-list, [data-role="exportbtn"], [data-role="loadpal"]')) closeMenus();
+  };
+  document.addEventListener('pointerdown', onDocDown);
+
+  const onHide = () => { saveNow(); };
+  window.addEventListener('pagehide', onHide);
+
+  // ── start ───────────────────────────────────────────────────────
+  refreshAll();
+  fitZoom();
+  loadInitial().then(() => { if (!destroyed) { fitZoom(); saveNow(); } });
+
+  return {
+    destroy() {
+      saveNow();
+      destroyed = true;
+      clearTimeout(msgTimer); clearTimeout(saveTimer); clearTimeout(hashTimer); clearTimeout(playTimer);
+      clearInterval(playRefreshTimer);
+      cancelAnimationFrame(thumbRaf);
+      keyTarget.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onDocDown);
+      window.removeEventListener('pagehide', onHide);
+      if (ro) ro.disconnect();
+      root.remove();
+    },
+  };
+}

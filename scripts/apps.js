@@ -18,4 +18,12 @@ export const APPS = {
     description: 'make a color palette',
     mount: (bodyEl) => import('/tools/palette/palette.tool.js').then(m => m.mountPaletteTool(bodyEl, { mode: 'window' })),
   },
+  pixel: {
+    id: 'pixel',
+    windowId: 'win-pixel',
+    title: 'pixel',
+    pageUrl: '/tools/pixel/',
+    description: 'draw pixel art',
+    mount: (bodyEl) => import('/tools/pixel/pixel.tool.js').then(m => m.mountPixelTool(bodyEl, { mode: 'window' })),
+  },
 };
