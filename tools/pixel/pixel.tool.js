@@ -2,8 +2,10 @@
 import {
   SIZES, MAX_FRAMES, MAX_COLORS, HALF, createDoc, setPixel, line, rect, floodFill,
   createHistory, snapshotOf, addFrame, duplicateFrame, deleteFrame, moveFrame, resizeDoc,
-  frameToRGBA, toSpritesheetRGBA, encodeDoc, decodeDoc, toCode, toGif,
+  frameToRGBA, toSpritesheetRGBA, encodeDoc, decodeDoc, toCode, toGif, hexToRgb,
 } from '/tools/pixel/pixel.core.js';
+import { parseCode } from '/tools/pixel/pixel.convert.js';
+import { createConvertPanel, cleanConvertSettings } from '/tools/pixel/pixel.convert.panel.js';
 import { getSavedPalettes } from '/tools/palette/palette.theme.js';
 
 const STATE_KEY = 'stray_pixel_state';
@@ -11,6 +13,7 @@ const CSS_HREF = '/tools/pixel/pixel.tool.css';
 const TOOLS = ['pencil', 'eraser', 'line', 'box', 'fill'];
 const TOOL_KEYS = { b: 'pencil', e: 'eraser', l: 'line', r: 'box', g: 'fill' };
 const SCALES = [1, 8, 16];
+const MAX_IMPORT_EDGE = 1024;
 
 const ICONS = {
   pencil: '<path d="M3 13l1-3.5L11 2.5l2.5 2.5-7 7L3 13z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
@@ -66,12 +69,14 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
 
   const state = {
     doc: createDoc(32), frameIdx: 0, tool: 'pencil', colorIdx: 0, half: false, mirror: false,
-    filled: false, onion: true, fps: 6, playing: true, zoom: 8,
+    filled: false, onion: true, fps: 6, playing: true, zoom: 8, cv: null,
   };
   const history = createHistory(100);
   let touched = false;        // user changed the doc, so a late async load must not replace it
   let msgTimer = 0, saveTimer = 0, hashTimer = 0, playTimer = 0, playIdx = 0;
-  let menu = null;            // 'export' | 'palettes' | null
+  let menu = null;            // 'export' | 'import' | 'palettes' | null
+  let preview = null;         // convert preview values drawn in place of the current frame
+  let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
   let destroyed = false;
   let stroke = null;          // active pointer stroke
@@ -113,8 +118,9 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
           <button type="button" class="px-btn px-sq" data-role="right" aria-label="move frame right" title="move frame right">→</button>
         </div>
         <div class="px-row">
-          <button type="button" class="px-btn" data-role="onion" aria-pressed="true" title="onion skin: show previous frame">onion skin</button>
+          <button type="button" class="px-btn" data-role="onion" aria-pressed="true" title="onion skin: show the previous frame faintly while you draw">onion skin</button>
           <button type="button" class="px-btn" data-role="clear" title="clear frame">clear frame</button>
+          <button type="button" class="px-btn" data-role="reduce" title="reduce this frame to fewer colors">reduce colors</button>
         </div>
       </section>
       <section class="px-sec" aria-label="canvas size">
@@ -127,7 +133,9 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       </section>
       <section class="px-sec px-exportwrap" aria-label="export">
         <div class="px-menu" data-role="exportmenu" role="menu" aria-label="export" hidden></div>
+        <div class="px-menu" data-role="importmenu" role="menu" aria-label="import" hidden></div>
         <div class="px-row">
+          <button type="button" class="px-btn" data-role="importbtn" aria-expanded="false" aria-haspopup="menu">import ▾</button>
           <button type="button" class="px-btn" data-role="exportbtn" aria-expanded="false" aria-haspopup="menu">export ▴</button>
           <span class="px-msg" data-role="msg" role="status" aria-live="polite"></span>
         </div>
@@ -144,6 +152,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     dup: $('dup'), del: $('del'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
     sizes: $('sizes'), confirm: $('confirm'), confirmtext: $('confirmtext'), yes: $('yes'), no: $('no'),
     exportmenu: $('exportmenu'), exportbtn: $('exportbtn'), msg: $('msg'),
+    importmenu: $('importmenu'), importbtn: $('importbtn'), reduce: $('reduce'), side: $('side'),
   };
   const ctx = el.canvas.getContext('2d');
   const playCtx = el.play.getContext('2d');
@@ -190,7 +199,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       const d = await encodeDoc(state.doc);
       sessionStorage.setItem(STATE_KEY, JSON.stringify({
         d, fi: state.frameIdx, tool: state.tool, ci: state.colorIdx, half: state.half,
-        mirror: state.mirror, filled: state.filled, onion: state.onion, fps: state.fps,
+        mirror: state.mirror, filled: state.filled, onion: state.onion, fps: state.fps, cv: state.cv,
       }));
     } catch (e) { /* ignore */ }
   }
@@ -208,6 +217,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       state.half = !!sess.half; state.mirror = !!sess.mirror; state.filled = !!sess.filled;
       if (typeof sess.onion === 'boolean') state.onion = sess.onion;
       if (Number.isInteger(sess.fps) && sess.fps >= 2 && sess.fps <= 12) state.fps = sess.fps;
+      if (sess.cv && !convPanel) state.cv = cleanConvertSettings(sess.cv);
     }
     fitZoom();
     refreshAll();
@@ -226,8 +236,8 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     fitZoom();
     changed();
   }
-  function undo() { if (history.canUndo) { touched = true; applySnapshot(history.undo(snapshotOf(state.doc))); } }
-  function redo() { if (history.canRedo) { touched = true; applySnapshot(history.redo(snapshotOf(state.doc))); } }
+  function undo() { if (convPanel && convPanel.isOpen) convPanel.close(); if (history.canUndo) { touched = true; applySnapshot(history.undo(snapshotOf(state.doc))); } }
+  function redo() { if (convPanel && convPanel.isOpen) convPanel.close(); if (history.canRedo) { touched = true; applySnapshot(history.redo(snapshotOf(state.doc))); } }
 
   // ── tools column ────────────────────────────────────────────────
   const toolDefs = [
@@ -273,6 +283,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     toolBtns.undo.disabled = !history.canUndo;
     toolBtns.redo.disabled = !history.canRedo;
     el.onion.setAttribute('aria-pressed', String(state.onion));
+    el.onion.disabled = state.frameIdx === 0;
     el.playbtn.setAttribute('aria-pressed', String(state.playing));
     el.playbtn.textContent = state.playing ? '⏸' : '▶';
     el.playbtn.setAttribute('aria-label', state.playing ? 'pause animation' : 'play animation');
@@ -304,7 +315,10 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       ctx.drawImage(scratch, 0, 0, cw, ch);
       ctx.globalAlpha = 1;
     }
-    sctx.putImageData(new ImageData(frameToRGBA(state.doc, state.frameIdx), w, ht), 0, 0);
+    const shown = preview && preview.length === w * ht
+      ? frameToRGBA({ w, h: ht, palette: state.doc.palette, frames: [preview] }, 0)
+      : frameToRGBA(state.doc, state.frameIdx);
+    sctx.putImageData(new ImageData(shown, w, ht), 0, 0);
     ctx.drawImage(scratch, 0, 0, cw, ch);
     if (z >= 8) {
       ctx.strokeStyle = 'rgba(184, 255, 160, 0.12)';
@@ -471,7 +485,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
 
   el.canvas.addEventListener('contextmenu', e => e.preventDefault());
   el.canvas.addEventListener('pointerdown', e => {
-    if (stroke) return;
+    if (stroke || (convPanel && convPanel.isOpen)) return;
     const [x, y] = cellAt(e);
     if (e.button === 2 || (e.button === 0 && e.altKey)) { e.preventDefault(); pick(x, y); return; }
     if (e.button !== 0) return;
@@ -589,9 +603,10 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   // ── menus: load palette, export ─────────────────────────────────
   function closeMenus() {
     menu = null;
-    el.pallist.hidden = true; el.exportmenu.hidden = true;
+    el.pallist.hidden = true; el.exportmenu.hidden = true; el.importmenu.hidden = true;
     el.loadpal.setAttribute('aria-expanded', 'false');
     el.exportbtn.setAttribute('aria-expanded', 'false');
+    el.importbtn.setAttribute('aria-expanded', 'false');
   }
   function openMenu(name) {
     const was = menu;
@@ -601,6 +616,9 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     if (name === 'palettes') {
       renderPalList(); el.pallist.hidden = false; el.loadpal.setAttribute('aria-expanded', 'true');
       const f = el.pallist.querySelector('button'); if (f) f.focus();
+    } else if (name === 'import') {
+      renderImportMenu(); el.importmenu.hidden = false; el.importbtn.setAttribute('aria-expanded', 'true');
+      const f = el.importmenu.querySelector('button'); if (f) f.focus();
     } else {
       renderExportMenu(); el.exportmenu.hidden = false; el.exportbtn.setAttribute('aria-expanded', 'true');
       const f = el.exportmenu.querySelector('button'); if (f) f.focus();
@@ -608,6 +626,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
   el.loadpal.addEventListener('click', () => openMenu('palettes'));
   el.exportbtn.addEventListener('click', () => openMenu('export'));
+  el.importbtn.addEventListener('click', () => openMenu('import'));
 
   let pngScale = 8;
   function renderExportMenu() {
@@ -682,13 +701,228 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     } catch (e) { flash('share failed'); }
   }
 
+
+  // ── import: image, code, share link ─────────────────────────────
+  const fileIn = h('input', { type: 'file', accept: 'image/*', hidden: true, 'aria-hidden': 'true', tabindex: '-1' });
+  root.appendChild(fileIn);
+
+  function getConv() {
+    if (!convPanel) {
+      convPanel = createConvertPanel({
+        host: el.side, h, settings: state.cv,
+        getDoc: () => state.doc, getFrameIdx: () => state.frameIdx, getColorIdx: () => state.colorIdx,
+        onSettings: cv => { state.cv = cv; scheduleSave(); },
+        onPreview: vals => { preview = vals; renderCanvas(); },
+        onApply: applyConvert,
+        onClose: () => { preview = null; syncControls(); renderCanvas(); },
+      });
+    }
+    return convPanel;
+  }
+
+  function applyConvert(values, dest) {
+    snapshot();
+    if (dest === 'new') {
+      const i = addFrame(state.doc, state.frameIdx);
+      if (i >= 0) state.frameIdx = i;
+    }
+    cur().set(values);
+    preview = null;
+    changed();
+    flash('converted');
+  }
+
+  function openConvert(src) {
+    closeMenus();
+    getConv().open(src);
+  }
+
+  async function decodeImageFile(file) {
+    let bmp = null, url = '';
+    try {
+      if (window.createImageBitmap) bmp = await createImageBitmap(file);
+    } catch (e) { bmp = null; }
+    let src = bmp;
+    if (!src) {
+      url = URL.createObjectURL(file);
+      src = await new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = () => rej(new Error('decode'));
+        img.src = url;
+      });
+    }
+    try {
+      const sw = src.width || src.naturalWidth, sh = src.height || src.naturalHeight;
+      if (!sw || !sh) throw new Error('empty');
+      const k = Math.min(1, MAX_IMPORT_EDGE / Math.max(sw, sh));
+      const w = Math.max(1, Math.round(sw * k)), hh = Math.max(1, Math.round(sh * k));
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = hh;
+      const c = cv.getContext('2d', { willReadFrequently: true });
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(src, 0, 0, w, hh);
+      return { rgba: c.getImageData(0, 0, w, hh).data, w, h: hh };
+    } finally {
+      if (bmp && bmp.close) bmp.close();
+      if (url) URL.revokeObjectURL(url);
+    }
+  }
+
+  async function importImageFile(file) {
+    if (!file || !/^image\//.test(file.type)) { flash('not an image'); return; }
+    try {
+      const img = await decodeImageFile(file);
+      if (destroyed) return;
+      openConvert({ kind: 'image', rgba: img.rgba, w: img.w, h: img.h, name: file.name || 'image' });
+    } catch (e) { flash('could not read image'); }
+  }
+  fileIn.addEventListener('change', () => {
+    const f = fileIn.files && fileIn.files[0];
+    fileIn.value = '';
+    if (f) importImageFile(f);
+  });
+
+  function nearestPaletteIdx(hex) {
+    const c = hexToRgb(hex);
+    let best = 0, bd = Infinity;
+    state.doc.palette.forEach((p, i) => {
+      const q = hexToRgb(p);
+      const d = 0.3 * (c[0] - q[0]) ** 2 + 0.59 * (c[1] - q[1]) ** 2 + 0.11 * (c[2] - q[2]) ** 2;
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+
+  function importCode(text) {
+    const parsed = parseCode(text);
+    if (!parsed) { flash('not valid code'); return false; }
+    const need = Math.max(parsed.w, parsed.h);
+    // grow the canvas if the code needs more room, never shrink it (that would crop other frames)
+    const size = Math.max(state.doc.w, SIZES.find(s => s >= need) || SIZES[SIZES.length - 1]);
+    const exact = parsed.w === size && parsed.h === size;
+    const useCurrent = cur().every(v => !v);
+    if (!useCurrent && state.doc.frames.length >= MAX_FRAMES) { flash('no free frame'); return false; }
+    snapshot();
+    if (state.doc.w !== size) { resizeDoc(state.doc, size); pendingSize = 0; fitZoom(); }
+    const { doc } = state;
+    const map = new Map();
+    if (parsed.legend) {
+      for (const [ch, hex] of parsed.legend) {
+        let i = doc.palette.findIndex(p => p.toLowerCase() === hex);
+        if (i < 0) {
+          if (doc.palette.length < MAX_COLORS) { doc.palette.push(hex); i = doc.palette.length - 1; }
+          else i = nearestPaletteIdx(hex);
+        }
+        map.set(ch, i);
+      }
+    }
+    if (useCurrent) { state.frameIdx = Math.min(state.frameIdx, doc.frames.length - 1); }
+    else state.frameIdx = addFrame(doc, state.frameIdx);
+    const f = cur();
+    f.fill(0);
+    for (let y = 0; y < Math.min(parsed.h, size); y++) {
+      for (let x = 0; x < Math.min(parsed.w, size); x++) {
+        const ch = parsed.rows[y][x];
+        if (ch === '.') continue;
+        let v;
+        if (parsed.legend) {
+          const lower = ch.toLowerCase();
+          v = map.get(lower) + 1;
+          if (ch !== lower) v |= HALF;
+        } else v = (state.colorIdx + 1) | (ch === '%' ? HALF : 0);
+        f[y * size + x] = v;
+      }
+    }
+    changed();
+    flash(exact ? 'imported' : `resized to ${size}`);
+    return true;
+  }
+
+  async function importShare(text) {
+    const raw = text.trim();
+    const hash = raw.includes('#') ? raw.slice(raw.indexOf('#') + 1) : raw;
+    const decoded = await decodeDoc(hash.trim());
+    if (destroyed) return false;
+    if (!decoded) { flash('not a pixel link'); return false; }
+    snapshot();
+    state.doc.w = decoded.w; state.doc.h = decoded.h;
+    state.doc.palette = decoded.palette; state.doc.frames = decoded.frames;
+    state.frameIdx = 0;
+    state.colorIdx = Math.min(state.colorIdx, decoded.palette.length - 1);
+    pendingSize = 0;
+    fitZoom();
+    changed();
+    flash('imported');
+    return true;
+  }
+
+  function renderImportMenu(mode = 'list') {
+    const m = el.importmenu;
+    m.textContent = '';
+    if (mode === 'list') {
+      const items = [
+        ['image file…', () => fileIn.click(), true],
+        ['paste code', () => renderImportMenu('code')],
+        ['share link', () => renderImportMenu('link')],
+      ];
+      for (const [label, fn, closes] of items) {
+        const b = h('button', { type: 'button', class: 'px-item', role: 'menuitem', text: label });
+        b.addEventListener('click', () => { if (closes) closeMenus(); fn(); });
+        m.appendChild(b);
+      }
+      return;
+    }
+    const label = mode === 'code' ? 'paste code' : 'share link';
+    const ta = h('textarea', { class: 'px-fallback', 'aria-label': label, rows: '6', spellcheck: 'false' });
+    const go = h('button', { type: 'button', class: 'px-btn px-btn-fill', text: 'import' });
+    const no = h('button', { type: 'button', class: 'px-btn', text: 'cancel' });
+    go.addEventListener('click', async () => {
+      const ok = mode === 'code' ? importCode(ta.value) : await importShare(ta.value);
+      if (ok) closeMenus();
+    });
+    no.addEventListener('click', () => closeMenus());
+    m.append(h('div', { class: 'px-lbl', text: label }), ta, go, no);
+    ta.focus();
+  }
+
+  el.reduce.addEventListener('click', () => {
+    const { doc } = state;
+    openConvert({
+      kind: 'frame', rgba: frameToRGBA(doc, state.frameIdx), w: doc.w, h: doc.h, name: `frame ${state.frameIdx + 1}`,
+    });
+  });
+
+  const imageOf = dt => {
+    if (!dt || !dt.files) return null;
+    return [...dt.files].find(f => /^image\//.test(f.type)) || null;
+  };
+  const onPaste = e => {
+    const t = e.target;
+    if (t && t.closest && t.closest('input, textarea, select, [contenteditable]')) return;
+    const f = imageOf(e.clipboardData);
+    if (!f) return;
+    e.preventDefault();
+    importImageFile(f);
+  };
+  const onDragOver = e => {
+    if (e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files')) e.preventDefault();
+  };
+  const onDrop = e => {
+    const f = imageOf(e.dataTransfer);
+    if (!f) return;
+    e.preventDefault();
+    importImageFile(f);
+  };
+
   // ── keyboard / outside clicks ───────────────────────────────────
   function onKey(e) {
     const t = e.target;
     const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
     if (e.key === 'Escape') {
+      if (convPanel && convPanel.isOpen) { convPanel.close(); e.stopPropagation(); return; }
       if (menu || pendingSize) {
-        const b = menu === 'palettes' ? el.loadpal : el.exportbtn;
+        const b = menu === 'palettes' ? el.loadpal : menu === 'import' ? el.importbtn : el.exportbtn;
         const hadMenu = !!menu;
         pendingSize = 0; renderConfirm(); closeMenus();
         if (hadMenu) b.focus();
@@ -725,6 +959,9 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
   const keyTarget = mode === 'page' ? document : root;
   keyTarget.addEventListener('keydown', onKey);
+  keyTarget.addEventListener('paste', onPaste);
+  el.stage.addEventListener('dragover', onDragOver);
+  el.stage.addEventListener('drop', onDrop);
 
   const onPointerDown = e => {
     if (!root.contains(e.target)) return;
@@ -734,7 +971,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
 
   const onDocDown = e => {
     if (!menu || !root.contains(e.target)) return;
-    if (!e.target.closest('.px-menu, .px-list, [data-role="exportbtn"], [data-role="loadpal"]')) closeMenus();
+    if (!e.target.closest('.px-menu, .px-list, [data-role="exportbtn"], [data-role="importbtn"], [data-role="loadpal"]')) closeMenus();
   };
   document.addEventListener('pointerdown', onDocDown);
 
@@ -754,6 +991,10 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       clearInterval(playRefreshTimer);
       cancelAnimationFrame(thumbRaf);
       keyTarget.removeEventListener('keydown', onKey);
+      keyTarget.removeEventListener('paste', onPaste);
+      el.stage.removeEventListener('dragover', onDragOver);
+      el.stage.removeEventListener('drop', onDrop);
+      if (convPanel) convPanel.destroy();
       document.removeEventListener('pointerdown', onDocDown);
       window.removeEventListener('pagehide', onHide);
       if (ro) ro.disconnect();

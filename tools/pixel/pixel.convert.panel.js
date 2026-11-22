@@ -1,0 +1,243 @@
+// Pixel editor convert panel: replaces the side column while open, previews live on the canvas.
+import { MAX_FRAMES } from '/tools/pixel/pixel.core.js';
+import { PATTERN_SETS, downscale, adjust, targetColors, convert } from '/tools/pixel/pixel.convert.js';
+
+const DEPTHS = [[1, '1-bit'], [2, '2-bit'], ['all', 'all']];
+const METHODS = [
+  ['none', 'flat'], ['bayer2', 'bayer 2×2'], ['bayer4', 'bayer 4×4'], ['bayer8', 'bayer 8×8'],
+  ['fs', 'floyd–steinberg'], ['atkinson', 'atkinson'], ['pattern', 'my patterns'], ['bands', 'bands'],
+];
+const OUTLINES = [['off', 'off'], ['solid', 'solid'], ['dotted', 'dotted']];
+
+export function defaultConvertSettings() {
+  return {
+    depth: 1, method: 'bayer4', set: 'bayer', tiles: PATTERN_SETS.bayer.tiles.map(t => t.slice()),
+    bands: 5, speck: 0, outline: 'off', bright: 0, contrast: 0,
+  };
+}
+
+// Accepts saved settings of unknown shape and returns a safe object.
+export function cleanConvertSettings(raw) {
+  const d = defaultConvertSettings();
+  if (!raw || typeof raw !== 'object') return d;
+  const num = (v, lo, hi, def) => (Number.isInteger(v) && v >= lo && v <= hi ? v : def);
+  if ([1, 2, 'all'].includes(raw.depth)) d.depth = raw.depth;
+  if (METHODS.some(m => m[0] === raw.method)) d.method = raw.method;
+  if (PATTERN_SETS[raw.set]) { d.set = raw.set; d.tiles = PATTERN_SETS[raw.set].tiles.map(t => t.slice()); }
+  if (Array.isArray(raw.tiles) && raw.tiles.length >= 2 && raw.tiles.length <= 8
+    && raw.tiles.every(t => Array.isArray(t) && t.length === 16)) {
+    d.tiles = raw.tiles.map(t => t.map(v => (v ? 1 : 0)));
+  }
+  d.bands = num(raw.bands, 2, 6, d.bands);
+  d.speck = num(raw.speck, 0, 40, d.speck);
+  if (OUTLINES.some(o => o[0] === raw.outline)) d.outline = raw.outline;
+  d.bright = num(raw.bright, -60, 60, 0);
+  d.contrast = num(raw.contrast, -60, 60, 0);
+  return d;
+}
+
+export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onPreview, onApply, onClose, h, settings, onSettings }) {
+  void getFrameIdx; void getColorIdx;
+  let s = cleanConvertSettings(settings);
+  let source = null, base = null, into = 'this', raf = 0, root = null;
+  const cleanups = [];
+  const ref = {};
+
+  const targets = () => targetColors(getDoc().palette, s.depth);
+
+  function compute() {
+    if (!source || !base) return null;
+    const doc = getDoc(), N = doc.w;
+    const rgb = adjust(base.rgb, s.bright, s.contrast);
+    return convert(rgb, base.alpha, N, targets(), {
+      method: s.method, tiles: s.tiles, bands: s.bands, speck: s.speck, outline: s.outline, rgb: s.depth === 'all',
+    });
+  }
+
+  function schedule() {
+    if (raf || !root) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      if (!root) return;
+      const v = compute();
+      if (v) onPreview(v);
+    });
+  }
+
+  function persist() { if (onSettings) onSettings(s); }
+
+  function seg(items, get, set, label) {
+    const row = h('div', { class: 'px-row', role: 'group', 'aria-label': label });
+    const btns = items.map(([val, text]) => {
+      const b = h('button', { type: 'button', class: 'px-btn', text, 'aria-pressed': 'false' });
+      b.addEventListener('click', () => { if (b.disabled) return; set(val); sync(); schedule(); persist(); });
+      row.appendChild(b);
+      return [val, b];
+    });
+    return { row, btns, update() { for (const [val, b] of btns) b.setAttribute('aria-pressed', String(get() === val)); } };
+  }
+
+  function range(label, min, max, key, fmt = v => String(v)) {
+    const input = h('input', { type: 'range', min: String(min), max: String(max), step: '1', 'aria-label': label });
+    const out = h('output', { text: '' });
+    const row = h('label', { class: 'px-rng' }, [h('span', { class: 'px-lbl', text: label }), input, out]);
+    input.addEventListener('input', () => {
+      s[key] = Number(input.value) || 0;
+      out.textContent = fmt(s[key]);
+      schedule(); persist();
+    });
+    return { row, update() { input.value = String(s[key]); out.textContent = fmt(s[key]); } };
+  }
+
+  function build() {
+    ref.depth = seg(DEPTHS, () => s.depth, v => { s.depth = v; if (v === 'all' && s.method === 'bands') s.method = 'bayer4'; }, 'color depth');
+    ref.swatches = h('div', { class: 'px-cvsw', 'aria-label': 'target colors', role: 'img' });
+    ref.method = h('select', { class: 'px-sel', 'aria-label': 'method' },
+      METHODS.map(([v, t]) => h('option', { value: v, text: t })));
+    ref.method.addEventListener('change', () => { s.method = ref.method.value; sync(); schedule(); persist(); });
+    ref.set = h('select', { class: 'px-sel', 'aria-label': 'pattern set' },
+      Object.entries(PATTERN_SETS).map(([k, v]) => h('option', { value: k, text: v.label })));
+    ref.set.addEventListener('change', () => {
+      s.set = ref.set.value; s.tiles = PATTERN_SETS[s.set].tiles.map(t => t.slice());
+      sync(); schedule(); persist();
+    });
+    ref.tiles = h('div', { class: 'px-tiles', role: 'group', 'aria-label': 'pattern tiles' });
+    ref.reset = h('button', { type: 'button', class: 'px-btn', text: 'reset tiles' });
+    ref.reset.addEventListener('click', () => {
+      s.tiles = PATTERN_SETS[s.set].tiles.map(t => t.slice());
+      sync(); schedule(); persist();
+    });
+    ref.patBlock = h('div', { class: 'px-sec' }, [
+      h('div', { class: 'px-lbl', text: 'pattern set' }), ref.set, ref.tiles, h('div', { class: 'px-row' }, [ref.reset]),
+    ]);
+    ref.bands = range('bands', 2, 6, 'bands');
+    ref.speck = range('speck', 0, 40, 'speck');
+    ref.outline = seg(OUTLINES, () => s.outline, v => { s.outline = v; }, 'outline');
+    ref.bandBlock = h('div', { class: 'px-sec' }, [
+      ref.bands.row, ref.speck.row, h('div', { class: 'px-lbl', text: 'outline' }), ref.outline.row,
+    ]);
+    ref.bright = range('bright', -60, 60, 'bright');
+    ref.contrast = range('contrast', -60, 60, 'contrast');
+    ref.into = seg([['this', 'this frame'], ['new', 'new frame']], () => into, v => { into = v; }, 'apply into');
+    ref.apply = h('button', { type: 'button', class: 'px-btn px-btn-fill', text: 'apply' });
+    ref.cancel = h('button', { type: 'button', class: 'px-btn', text: 'cancel' });
+    ref.apply.addEventListener('click', apply);
+    ref.cancel.addEventListener('click', () => close());
+    ref.name = h('span', { class: 'px-cvname' });
+
+    root = h('section', { class: 'px-conv', 'aria-label': 'convert' }, [
+      h('div', { class: 'px-row' }, [h('span', { class: 'px-lbl', text: 'convert' }), ref.name]),
+      h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'colors' }), ref.depth.row, ref.swatches]),
+      h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'method' }), ref.method]),
+      ref.patBlock, ref.bandBlock,
+      h('div', { class: 'px-sec' }, [ref.bright.row, ref.contrast.row]),
+      h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'into' }), ref.into.row]),
+      h('div', { class: 'px-row' }, [ref.apply, ref.cancel]),
+    ]);
+  }
+
+  function drawTile(cv, tile, tg) {
+    const c = cv.getContext('2d');
+    const dark = tg[0] ? tg[0].rgb : [0, 0, 0], light = (tg[1] || tg[0] || { rgb: [255, 255, 255] }).rgb;
+    const im = c.createImageData(4, 4);
+    for (let i = 0; i < 16; i++) im.data.set([...(tile[i] ? light : dark), 255], i * 4);
+    c.putImageData(im, 0, 0);
+  }
+
+  function renderTiles(tg) {
+    ref.tiles.textContent = '';
+    s.tiles.forEach((tile, k) => {
+      const cv = h('canvas', { class: 'px-tile', width: '4', height: '4', 'aria-label': `tile ${k + 1}`, role: 'img' });
+      drawTile(cv, tile, tg);
+      let paintVal = null;
+      const cellOf = e => {
+        const r = cv.getBoundingClientRect();
+        const x = Math.max(0, Math.min(3, Math.floor((e.clientX - r.left) / r.width * 4)));
+        const y = Math.max(0, Math.min(3, Math.floor((e.clientY - r.top) / r.height * 4)));
+        return y * 4 + x;
+      };
+      const setCell = c => {
+        if (tile[c] === paintVal) return;
+        tile[c] = paintVal; drawTile(cv, tile, tg); schedule(); persist();
+      };
+      cv.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        const c = cellOf(e);
+        paintVal = tile[c] ? 0 : 1;
+        try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        setCell(c);
+      });
+      cv.addEventListener('pointermove', e => { if (paintVal !== null) setCell(cellOf(e)); });
+      const stop = () => { paintVal = null; };
+      cv.addEventListener('pointerup', stop);
+      cv.addEventListener('pointercancel', stop);
+      ref.tiles.appendChild(cv);
+    });
+  }
+
+  function sync() {
+    if (!root) return;
+    const doc = getDoc(), tg = targets();
+    if (doc.frames.length >= MAX_FRAMES && into === 'new') into = 'this';
+    ref.depth.update(); ref.outline.update(); ref.into.update();
+    ref.into.btns.find(b => b[0] === 'new')[1].disabled = doc.frames.length >= MAX_FRAMES;
+    ref.bands.update(); ref.speck.update(); ref.bright.update(); ref.contrast.update();
+    ref.method.value = s.method; ref.set.value = s.set;
+    const bandsOpt = [...ref.method.options].find(o => o.value === 'bands');
+    bandsOpt.disabled = s.depth === 'all';
+    ref.patBlock.hidden = !(s.method === 'pattern' || s.method === 'bands');
+    ref.bandBlock.hidden = s.method !== 'bands';
+    ref.swatches.textContent = '';
+    for (const t of tg) ref.swatches.appendChild(h('span', { style: `background:${doc.palette[t.idx]}`, title: doc.palette[t.idx] }));
+    renderTiles(tg);
+  }
+
+  function sourceBase() {
+    const N = getDoc().w;
+    return downscale(source.rgba, source.w, source.h, N, { fit: 'crop' });
+  }
+
+  function open(src) {
+    if (root) { root.remove(); }
+    source = src;
+    base = sourceBase();
+    into = src.kind === 'image' ? 'new' : 'this';
+    build();
+    ref.name.textContent = src.name || '';
+    host.classList.add('px-side-conv');
+    host.prepend(root);
+    sync();
+    const f = root.querySelector('button, select');
+    if (f) f.focus({ preventScroll: true });
+    schedule();
+  }
+
+  function apply() {
+    const v = compute();
+    if (!v) return;
+    const dest = into;
+    persist();
+    onApply(v, dest);
+    close();
+  }
+
+  function close() {
+    if (!root) return;
+    cancelAnimationFrame(raf); raf = 0;
+    root.remove(); root = null; source = null; base = null;
+    host.classList.remove('px-side-conv');
+    onClose();
+  }
+
+  return {
+    open, close,
+    get isOpen() { return !!root; },
+    destroy() {
+      cancelAnimationFrame(raf); raf = 0;
+      if (root) root.remove();
+      root = null; source = null; base = null;
+      host.classList.remove('px-side-conv');
+      for (const fn of cleanups) fn();
+    },
+  };
+}

@@ -138,6 +138,25 @@
 }
 .px-item:focus-visible { outline-offset: -2px; }
 
+/* convert panel (replaces the side column contents while open) */
+.px-side-conv > :not(.px-conv) { display: none !important; }
+.px-conv { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.px-cvname { color: var(--color-primary-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.px-cvsw { display: flex; gap: 3px; min-height: 16px; }
+.px-cvsw span { width: 16px; height: 16px; border: 1px solid var(--color-border); border-radius: 3px; }
+.px-conv .px-sel { width: 100%; }
+.px-conv .px-btn[aria-pressed] { padding: 5px 8px; }
+.px-tiles { display: flex; flex-wrap: wrap; gap: 4px; }
+.px-tile {
+  width: 34px; height: 34px; image-rendering: pixelated; cursor: pointer; touch-action: none;
+  border: 1px solid var(--color-border); border-radius: 3px;
+}
+.px-tile:hover { border-color: var(--color-primary); }
+.px-rng { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.px-rng .px-lbl { flex: 1 0 100%; }
+.px-rng output { min-width: 3ch; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.px-rng input { flex: 1; min-width: 0; accent-color: var(--color-accent); }
+
 /* narrow: strip, canvas, tools row, then the side column stacked */
 @container (max-width: 639px) {
   .pixel-tool { overflow-y: auto; }
