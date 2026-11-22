@@ -43,7 +43,9 @@
   background-size: 12px 12px;
 }
 .px-play { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px; }
-.px-playcv { width: 56px; height: 56px; border: 1px solid var(--color-border); }
+.px-playcv { width: 56px; height: 56px; border: 1px solid var(--color-border); cursor: pointer; }
+.px-playcv:hover, .px-playcv[aria-pressed="true"] { border-color: var(--color-accent-hi); }
+.px-bigplay .px-canvas { cursor: pointer; }
 .px-playctl { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .px-fps { display: flex; align-items: center; gap: 4px; }
 .px-fps input { width: 70px; accent-color: var(--color-accent); }

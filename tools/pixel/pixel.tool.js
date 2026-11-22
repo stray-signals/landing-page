@@ -80,6 +80,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let previewPal = null;      // palette to draw the convert preview with (image colors)
   let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
+  let bigPlay = false;        // animation playing full size on the main canvas
   let destroyed = false;
   let stroke = null;          // active pointer stroke
   let colorEditSnap = false;  // snapshot already taken for the current color-input edit
@@ -90,7 +91,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     <div class="px-strip">
       <div class="px-frames" data-role="frames" role="group" aria-label="frames"></div>
       <div class="px-play">
-        <canvas class="px-playcv" data-role="play" aria-label="animation preview" role="img"></canvas>
+        <canvas class="px-playcv" data-role="play" aria-label="play animation full size" role="button" tabindex="0" title="play full size"></canvas>
         <div class="px-playctl">
           <button type="button" class="px-btn px-sq" data-role="playbtn" aria-pressed="true" aria-label="play animation" title="play / pause (space)">⏸</button>
           <label class="px-fps"><span class="px-lbl">fps</span>
@@ -311,6 +312,12 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cw, ch);
     scratch.width = w; scratch.height = ht;
+    if (bigPlay) {
+      const i = state.playing ? playIdx % state.doc.frames.length : state.frameIdx;
+      sctx.putImageData(new ImageData(frameToRGBA(state.doc, i), w, ht), 0, 0);
+      ctx.drawImage(scratch, 0, 0, cw, ch);
+      return;
+    }
     if (state.onion && state.frameIdx > 0) {
       sctx.putImageData(new ImageData(frameToRGBA(state.doc, state.frameIdx - 1), w, ht), 0, 0);
       ctx.globalAlpha = 0.25;
@@ -435,7 +442,19 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const { doc } = state;
     const i = state.playing ? playIdx % doc.frames.length : state.frameIdx;
     putRGBA(el.play, playCtx, frameToRGBA(doc, i), doc.w, doc.h);
+    if (bigPlay) renderCanvas();
   }
+  function setBigPlay(on) {
+    if (on && convPanel && convPanel.isOpen) return;
+    bigPlay = on;
+    el.stage.classList.toggle('px-bigplay', on);
+    el.play.setAttribute('aria-pressed', String(on));
+    renderCanvas();
+  }
+  el.play.addEventListener('click', () => setBigPlay(!bigPlay));
+  el.play.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setBigPlay(!bigPlay); }
+  });
   function restartPlay() {
     clearTimeout(playTimer);
     playIdx = state.playing ? playIdx % state.doc.frames.length : 0;
@@ -487,6 +506,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
 
   el.canvas.addEventListener('contextmenu', e => e.preventDefault());
   el.canvas.addEventListener('pointerdown', e => {
+    if (bigPlay) { e.preventDefault(); setBigPlay(false); return; }
     if (stroke || (convPanel && convPanel.isOpen)) return;
     const [x, y] = cellAt(e);
     if (e.button === 2 || (e.button === 0 && e.altKey)) { e.preventDefault(); pick(x, y); return; }
@@ -751,6 +771,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
 
   function openConvert(src) {
+    if (bigPlay) setBigPlay(false);
     closeMenus();
     getConv().open(src);
   }
@@ -953,6 +974,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const t = e.target;
     const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
     if (e.key === 'Escape') {
+      if (bigPlay) { setBigPlay(false); e.stopPropagation(); return; }
       if (convPanel && convPanel.isOpen) { convPanel.close(); e.stopPropagation(); return; }
       if (menu || pendingSize) {
         const b = menu === 'palettes' ? el.loadpal : menu === 'import' ? el.importbtn : el.exportbtn;
