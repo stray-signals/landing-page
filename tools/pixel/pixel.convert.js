@@ -188,7 +188,20 @@ export function borderColor(frames, w, h) {
 }
 
 // Every frame ends up on the same N x N grid with the same crop and scale.
-export function prepareSource(frames, w, h, N, { removeBg = false } = {}) {
+export function prepareSource(frames, w, h, N, { removeBg = false, exact = false } = {}) {
+  if (exact && w === N && h === N) {
+    // the doc's own frames: map 1:1, no crop or rescale
+    return {
+      pixelArt: false,
+      frames: frames.map(f => {
+        const rgb = new Float32Array(N * N * 3), alpha = new Uint8Array(N * N);
+        for (let i = 0; i < N * N; i++) {
+          rgb[i * 3] = f[i * 4]; rgb[i * 3 + 1] = f[i * 4 + 1]; rgb[i * 3 + 2] = f[i * 4 + 2]; alpha[i] = f[i * 4 + 3];
+        }
+        return { rgb, alpha };
+      }),
+    };
+  }
   let scale = 0, big = false;
   const uniq = new Set();
   for (const f of frames) {

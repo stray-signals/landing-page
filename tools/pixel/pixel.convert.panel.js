@@ -48,7 +48,16 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
   const rgbMode = () => s.depth === 'palette' || s.depth === 'image';
   const hexOf = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
   const multi = () => !!source && source.frames.length > 1;
-  const allMode = () => multi() && framesMode === 'all';
+  const isFrameSrc = () => !!source && source.kind === 'frame';
+  const allMode = () => multi() && !isFrameSrc() && framesMode === 'all';
+  // reduce colors on the doc's own frames: 'this' / 'sel' / 'all', converted in place
+  const frameMulti = () => isFrameSrc() && framesMode !== 'this';
+  const frameIdxs = () => {
+    if (framesMode === 'all') return source.frames.map((_, i) => i);
+    if (framesMode === 'sel') return (source.selIdx || []).slice();
+    return [source.startIdx || 0];
+  };
+  const previewIdx = () => (isFrameSrc() ? source.startIdx || 0 : 0);
   const isEmptyDoc = doc => doc.frames.length === 1 && doc.frames[0].every(v => !v);
 
   // Palette the image colors would use: existing art keeps its colors, new colors go in free slots.
@@ -99,7 +108,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
 
   function compute() {
     if (!source || !base) return null;
-    return computeFrame(base.frames[0], targets());
+    return computeFrame(base.frames[previewIdx()] || base.frames[0], targets());
   }
 
   function schedule() {
@@ -171,8 +180,11 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     ref.bright = range('bright', -60, 60, 'bright');
     ref.contrast = range('contrast', -60, 60, 'contrast');
     ref.into = seg([['this', 'this frame'], ['new', 'new frame']], () => into, v => { into = v; }, 'apply into');
-    ref.frames = seg([['all', 'all'], ['first', 'first']], () => framesMode, v => { framesMode = v; }, 'frames');
-    ref.frames.btns[0][1].textContent = `all ${source.frames.length}`;
+    ref.frames = isFrameSrc()
+      ? seg([['this', 'this frame']]
+        .concat((source.selIdx || []).length > 1 ? [['sel', `selected ${source.selIdx.length}`]] : [])
+        .concat([['all', `all ${source.frames.length}`]]), () => framesMode, v => { framesMode = v; }, 'frames')
+      : seg([['all', `all ${source.frames.length}`], ['first', 'first']], () => framesMode, v => { framesMode = v; }, 'frames');
     ref.bg = seg([['remove', 'remove'], ['keep', 'keep']], () => (removeBg ? 'remove' : 'keep'), v => {
       removeBg = v === 'remove'; plan = null; base = sourceBase();
     }, 'background');
@@ -194,7 +206,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
       ref.patBlock, ref.bandBlock,
       h('div', { class: 'px-sec' }, [ref.bright.row, ref.contrast.row]),
       ref.bgBlock, ref.framesBlock,
-      h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'into' }), ref.into.row]),
+      ref.intoBlock = h('div', { class: 'px-sec' }, [h('div', { class: 'px-lbl', text: 'into' }), ref.into.row]),
       h('div', { class: 'px-row' }, [ref.apply, ref.cancel]),
     ]);
   }
@@ -242,7 +254,10 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     if (!root) return;
     const doc = getDoc(), tg = targets();
     const full = doc.frames.length >= MAX_FRAMES && !(allMode() && isEmptyDoc(doc));
-    if (allMode()) into = 'new';
+    ref.intoBlock.hidden = frameMulti();
+    if (frameMulti()) into = 'replace';
+    else if (into === 'replace') into = 'this';
+    else if (allMode()) into = 'new';
     else if (full && into === 'new') into = 'this';
     ref.depth.update(); ref.outline.update(); ref.frames.update(); ref.into.update(); ref.bg.update();
     ref.bgBlock.hidden = !bgColor;
@@ -263,7 +278,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
   }
 
   function sourceBase() {
-    return prepareSource(source.frames, source.w, source.h, getDoc().w, { removeBg });
+    return prepareSource(source.frames, source.w, source.h, getDoc().w, { removeBg, exact: isFrameSrc() });
   }
 
   function frameCap() {
@@ -281,7 +296,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     base = sourceBase();
     if (base.pixelArt) bgColor = borderColor(source.frames, source.w, source.h);
     if (base.pixelArt) { s.depth = 'image'; s.method = 'none'; }
-    framesMode = 'all';
+    framesMode = src.kind === 'frame' ? 'this' : 'all';
     into = src.kind === 'image' ? 'new' : 'this';
     build();
     ref.name.textContent = src.name || '';
@@ -297,7 +312,8 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
   function apply() {
     if (!compute()) return;
     const tg = targets();
-    let list = allMode() ? base.frames : [base.frames[0]];
+    const indices = frameMulti() ? frameIdxs() : null;
+    let list = indices ? indices.map(i => base.frames[i]) : allMode() ? base.frames : [base.frames[previewIdx()] || base.frames[0]];
     const total = list.length;
     if (allMode()) list = list.slice(0, Math.max(0, frameCap()));
     if (!list.length) return;
@@ -309,7 +325,7 @@ export function createConvertPanel({ host, getDoc, getFrameIdx, getColorIdx, onP
     }
     const dest = into, palette = s.depth === 'image' ? planned().palette : null;
     persist();
-    onApply({ frames, dest, palette, fps, total });
+    onApply({ frames, dest, palette, fps, total, indices });
     close();
   }
 

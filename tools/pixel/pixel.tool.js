@@ -81,6 +81,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
   let bigPlay = false;        // animation playing full size on the main canvas
+  let sel = new Set();        // extra selected frames (shift/ctrl-click); the current frame is always selected
   let destroyed = false;
   let stroke = null;          // active pointer stroke
   let colorEditSnap = false;  // snapshot already taken for the current color-input edit
@@ -119,6 +120,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
           <button type="button" class="px-btn" data-role="del" title="delete frame">delete</button>
           <button type="button" class="px-btn px-sq" data-role="left" aria-label="move frame left" title="move frame left">←</button>
           <button type="button" class="px-btn px-sq" data-role="right" aria-label="move frame right" title="move frame right">→</button>
+          <button type="button" class="px-btn" data-role="selall" aria-pressed="false" title="select all frames">select all</button>
         </div>
         <div class="px-row">
           <button type="button" class="px-btn" data-role="onion" aria-pressed="true" title="onion skin: show the previous frame faintly while you draw">onion skin</button>
@@ -152,7 +154,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     frames: $('frames'), play: $('play'), playbtn: $('playbtn'), fps: $('fps'), fpsout: $('fpsout'),
     tools: $('tools'), stage: $('stage'), canvas: $('canvas'), big: $('big'), hex: $('hex'), colorin: $('colorin'),
     swatches: $('swatches'), addcolor: $('addcolor'), loadpal: $('loadpal'), pallist: $('pallist'),
-    dup: $('dup'), del: $('del'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
+    dup: $('dup'), del: $('del'), selall: $('selall'), left: $('left'), right: $('right'), onion: $('onion'), clear: $('clear'),
     sizes: $('sizes'), confirm: $('confirm'), confirmtext: $('confirmtext'), yes: $('yes'), no: $('no'),
     exportmenu: $('exportmenu'), exportbtn: $('exportbtn'), msg: $('msg'),
     importmenu: $('importmenu'), importbtn: $('importbtn'), reduce: $('reduce'), side: $('side'),
@@ -234,6 +236,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     if (!s) return;
     state.doc.w = s.w; state.doc.h = s.h; state.doc.palette = s.palette; state.doc.frames = s.frames;
     state.frameIdx = Math.min(state.frameIdx, s.frames.length - 1);
+    sel.clear();
     state.colorIdx = Math.min(state.colorIdx, s.palette.length - 1);
     pendingSize = 0;
     fitZoom();
@@ -293,10 +296,17 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     el.fps.value = String(state.fps);
     el.fpsout.textContent = String(state.fps);
     const n = state.doc.frames.length;
-    el.dup.disabled = n >= MAX_FRAMES;
-    el.del.disabled = n <= 1;
-    el.left.disabled = state.frameIdx <= 0;
-    el.right.disabled = state.frameIdx >= n - 1;
+    for (const i of [...sel]) if (i >= n || i === state.frameIdx) sel.delete(i);
+    const ns = sel.size + 1, multiSel = ns > 1;
+    el.dup.disabled = n + ns > MAX_FRAMES;
+    el.del.disabled = n <= 1 && state.doc.frames[0].every(v => !v);
+    el.dup.textContent = multiSel ? `duplicate ${ns}` : 'duplicate';
+    el.del.textContent = ns >= n && n > 1 ? 'delete all' : multiSel ? `delete ${ns}` : 'delete';
+    el.clear.textContent = multiSel ? `clear ${ns}` : 'clear frame';
+    el.selall.setAttribute('aria-pressed', String(n > 1 && ns >= n));
+    el.selall.disabled = n <= 1;
+    el.left.disabled = multiSel || state.frameIdx <= 0;
+    el.right.disabled = multiSel || state.frameIdx >= n - 1;
     el.addcolor.disabled = state.doc.palette.length >= MAX_COLORS;
   }
 
@@ -363,11 +373,27 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     doc.frames.forEach((_, i) => {
       const cv = h('canvas', { class: 'px-thumb', width: String(doc.w), height: String(doc.h), 'aria-hidden': 'true' });
       putRGBA(cv, cv.getContext('2d'), frameToRGBA(doc, i), doc.w, doc.h);
+      const picked = i === state.frameIdx || sel.has(i);
       const b = h('button', {
-        type: 'button', class: 'px-fr' + (i === state.frameIdx ? ' on' : ''),
-        'aria-label': `frame ${i + 1}`, 'aria-pressed': String(i === state.frameIdx),
+        type: 'button', class: 'px-fr' + (i === state.frameIdx ? ' on' : picked ? ' sel' : ''),
+        'aria-label': `frame ${i + 1}`, 'aria-pressed': String(picked),
+        title: 'shift-click: select a range · ctrl-click: add or remove',
       }, [cv, h('span', { text: String(i + 1) })]);
-      b.addEventListener('click', () => { state.frameIdx = i; refreshAll(); scheduleSave(); });
+      b.addEventListener('click', e => {
+        if (e.shiftKey) {
+          const a = Math.min(i, state.frameIdx), z = Math.max(i, state.frameIdx);
+          for (let k = a; k <= z; k++) sel.add(k);
+        } else if (e.ctrlKey || e.metaKey) {
+          if (i === state.frameIdx) {
+            const rest = [...sel].filter(k => k !== i);
+            if (rest.length) { state.frameIdx = rest[rest.length - 1]; sel.delete(state.frameIdx); }
+          } else if (sel.has(i)) sel.delete(i);
+          else { sel.add(state.frameIdx); sel.add(i); }
+        } else sel.clear();
+        if (!e.ctrlKey && !e.metaKey) state.frameIdx = i;
+        sel.delete(state.frameIdx);
+        refreshAll(); scheduleSave();
+      });
       el.frames.appendChild(b);
     });
     const add = h('button', { type: 'button', class: 'px-fr px-add', 'aria-label': 'add frame', title: 'add frame after current', text: '+' });
@@ -376,6 +402,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       snapshot();
       const i = addFrame(state.doc, state.frameIdx);
       if (i >= 0) state.frameIdx = i;
+      sel.clear();
       changed();
     });
     el.frames.appendChild(add);
@@ -594,13 +621,41 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     }
   }
 
+  // selected frame indexes, ascending (always includes the current frame)
+  const selected = () => [...new Set([...sel, state.frameIdx])].filter(i => i < state.doc.frames.length).sort((a, b) => a - b);
+  el.selall.addEventListener('click', () => {
+    const n = state.doc.frames.length;
+    if (selected().length >= n) sel.clear();
+    else for (let i = 0; i < n; i++) sel.add(i);
+    sel.delete(state.frameIdx);
+    refreshAll();
+  });
   el.dup.addEventListener('click', () => {
-    if (state.doc.frames.length >= MAX_FRAMES) return;
-    snapshot(); state.frameIdx = duplicateFrame(state.doc, state.frameIdx); changed();
+    const idx = selected(), doc = state.doc;
+    if (doc.frames.length + idx.length > MAX_FRAMES) { flash(`max ${MAX_FRAMES} frames`); return; }
+    snapshot();
+    const copies = idx.map(i => doc.frames[i].slice()), at = idx[idx.length - 1] + 1;
+    doc.frames.splice(at, 0, ...copies);
+    sel.clear();
+    for (let k = 1; k < copies.length; k++) sel.add(at + k);
+    state.frameIdx = at;
+    changed();
   });
   el.del.addEventListener('click', () => {
-    if (state.doc.frames.length <= 1) return;
-    snapshot(); state.frameIdx = deleteFrame(state.doc, state.frameIdx); changed();
+    const idx = selected(), doc = state.doc;
+    if (idx.length >= doc.frames.length) {
+      if (doc.frames.length <= 1 && doc.frames[0].every(v => !v)) return;
+      snapshot();
+      doc.frames = [new Uint16Array(doc.w * doc.h)];
+      state.frameIdx = 0;
+    } else {
+      snapshot();
+      for (let k = idx.length - 1; k >= 0; k--) doc.frames.splice(idx[k], 1);
+      state.frameIdx = Math.min(idx[0], doc.frames.length - 1);
+    }
+    sel.clear();
+    changed();
+    if (idx.length > 1) flash(`deleted ${idx.length} frames`);
   });
   el.left.addEventListener('click', () => {
     if (state.frameIdx <= 0) return;
@@ -611,7 +666,12 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     snapshot(); state.frameIdx = moveFrame(state.doc, state.frameIdx, state.frameIdx + 1); changed();
   });
   el.onion.addEventListener('click', () => { state.onion = !state.onion; syncControls(); renderCanvas(); scheduleSave(); });
-  el.clear.addEventListener('click', () => { snapshot(); cur().fill(0); changed(); });
+  el.clear.addEventListener('click', () => {
+    const idx = selected();
+    snapshot();
+    for (const i of idx) state.doc.frames[i].fill(0);
+    changed();
+  });
   el.yes.addEventListener('click', () => {
     if (!pendingSize) return;
     snapshot();
@@ -745,7 +805,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     return convPanel;
   }
 
-  function applyConvert({ frames, dest, palette, fps, total }) {
+  function applyConvert({ frames, dest, palette, fps, total, indices }) {
     snapshot();
     const doc = state.doc;
     if (palette) doc.palette = palette.slice();
@@ -761,13 +821,18 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
         if (added === 0) first = i;
         at = i; added++;
       });
+    } else if (dest === 'replace') {
+      frames.forEach((vals, k) => { const fi = indices ? indices[k] : k; if (doc.frames[fi]) doc.frames[fi].set(vals); });
+      added = frames.length;
     } else { doc.frames[state.frameIdx].set(frames[0]); added = 1; }
     state.frameIdx = first;
+    if (dest === 'new') sel.clear();
     preview = null; previewPal = null;
     if (fps) { state.fps = fps; }
     changed();
     restartPlay();
-    flash(dest === 'new' ? (total > added ? `added ${added} of ${total} frames` : `added ${added} frames`) : 'converted');
+    flash(dest === 'new' ? (total > added ? `added ${added} of ${total} frames` : `added ${added} frames`)
+      : dest === 'replace' ? `converted ${added} frames` : 'converted');
   }
 
   function openConvert(src) {
@@ -857,7 +922,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const exact = parsed.w === size && parsed.h === size;
     const useCurrent = cur().every(v => !v);
     if (!useCurrent && state.doc.frames.length >= MAX_FRAMES) { flash('no free frame'); return false; }
-    snapshot();
+    snapshot(); sel.clear();
     if (state.doc.w !== size) { resizeDoc(state.doc, size); pendingSize = 0; fitZoom(); }
     const { doc } = state;
     const map = new Map();
@@ -899,7 +964,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     const decoded = await decodeDoc(hash.trim());
     if (destroyed) return false;
     if (!decoded) { flash('not a pixel link'); return false; }
-    snapshot();
+    snapshot(); sel.clear();
     state.doc.w = decoded.w; state.doc.h = decoded.h;
     state.doc.palette = decoded.palette; state.doc.frames = decoded.frames;
     state.frameIdx = 0;
@@ -943,7 +1008,8 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   el.reduce.addEventListener('click', () => {
     const { doc } = state;
     openConvert({
-      kind: 'frame', frames: [frameToRGBA(doc, state.frameIdx)], w: doc.w, h: doc.h, name: `frame ${state.frameIdx + 1}`,
+      kind: 'frame', frames: doc.frames.map((_, i) => frameToRGBA(doc, i)), startIdx: state.frameIdx, selIdx: selected(),
+      w: doc.w, h: doc.h, name: `frame ${state.frameIdx + 1}`,
     });
   });
 
