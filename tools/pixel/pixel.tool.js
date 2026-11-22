@@ -4,7 +4,8 @@ import {
   createHistory, snapshotOf, addFrame, duplicateFrame, deleteFrame, moveFrame, resizeDoc,
   frameToRGBA, toSpritesheetRGBA, encodeDoc, decodeDoc, toCode, toGif, hexToRgb,
 } from '/tools/pixel/pixel.core.js';
-import { parseCode } from '/tools/pixel/pixel.convert.js';
+import { parseCode, gifFrames } from '/tools/pixel/pixel.convert.js';
+import { GifReader } from '/tools/vendor/omggif.js';
 import { createConvertPanel, cleanConvertSettings } from '/tools/pixel/pixel.convert.panel.js';
 import { getSavedPalettes } from '/tools/palette/palette.theme.js';
 
@@ -76,6 +77,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let msgTimer = 0, saveTimer = 0, hashTimer = 0, playTimer = 0, playIdx = 0;
   let menu = null;            // 'export' | 'import' | 'palettes' | null
   let preview = null;         // convert preview values drawn in place of the current frame
+  let previewPal = null;      // palette to draw the convert preview with (image colors)
   let convPanel = null;       // created on first use
   let pendingSize = 0;        // size awaiting confirmation
   let destroyed = false;
@@ -186,7 +188,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       hashTimer = setTimeout(async () => {
         try {
           const enc = await encodeDoc(state.doc);
-          if (!destroyed) history_replace(enc);
+          if (!destroyed && enc.length <= 2000000) history_replace(enc);
         } catch (e) { /* ignore */ }
       }, 500);
     }
@@ -316,7 +318,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       ctx.globalAlpha = 1;
     }
     const shown = preview && preview.length === w * ht
-      ? frameToRGBA({ w, h: ht, palette: state.doc.palette, frames: [preview] }, 0)
+      ? frameToRGBA({ w, h: ht, palette: previewPal || state.doc.palette, frames: [preview] }, 0)
       : frameToRGBA(state.doc, state.frameIdx);
     sctx.putImageData(new ImageData(shown, w, ht), 0, 0);
     ctx.drawImage(scratch, 0, 0, cw, ch);
@@ -685,11 +687,12 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
   function downloadSheet() {
     const s = toSpritesheetRGBA(state.doc);
-    canvasBlob(s.data, s.width, s.height, 8, 'pixel-spritesheet-8x.png');
+    const sc = state.doc.w >= 128 ? 4 : 8;
+    canvasBlob(s.data, s.width, s.height, sc, `pixel-spritesheet-${sc}x.png`);
   }
   function downloadGif() {
     try {
-      const bytes = toGif(state.doc, { scale: 8, fps: state.fps });
+      const bytes = toGif(state.doc, { scale: state.doc.w >= 128 ? 4 : 8, fps: state.fps });
       download(new Blob([bytes], { type: 'image/gif' }), 'pixel.gif');
       flash('downloaded pixel.gif');
     } catch (e) { flash('gif failed'); }
@@ -697,7 +700,9 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   async function copyShare() {
     try {
       const enc = await encodeDoc(state.doc);
-      copyText(location.origin + '/tools/pixel/#' + enc, 'share link');
+      if (enc.length > 2000000) { flash('too big for a link, use export'); return; }
+      const link = location.origin + '/tools/pixel/#' + enc;
+      copyText(link, 'share link' + (link.length > 8000 ? ` (long: ${Math.round(link.length / 1024)} KB)` : ''));
     } catch (e) { flash('share failed'); }
   }
 
@@ -712,24 +717,37 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
         host: el.side, h, settings: state.cv,
         getDoc: () => state.doc, getFrameIdx: () => state.frameIdx, getColorIdx: () => state.colorIdx,
         onSettings: cv => { state.cv = cv; scheduleSave(); },
-        onPreview: vals => { preview = vals; renderCanvas(); },
+        onPreview: (vals, pal) => { preview = vals; previewPal = pal || null; renderCanvas(); },
         onApply: applyConvert,
-        onClose: () => { preview = null; syncControls(); renderCanvas(); },
+        onClose: () => { preview = null; previewPal = null; syncControls(); renderCanvas(); },
       });
     }
     return convPanel;
   }
 
-  function applyConvert(values, dest) {
+  function applyConvert({ frames, dest, palette, fps, total }) {
     snapshot();
+    const doc = state.doc;
+    if (palette) doc.palette = palette.slice();
+    const emptyOne = doc.frames.length === 1 && doc.frames[0].every(v => !v);
+    let first = state.frameIdx, added = 0;
     if (dest === 'new') {
-      const i = addFrame(state.doc, state.frameIdx);
-      if (i >= 0) state.frameIdx = i;
-    }
-    cur().set(values);
-    preview = null;
+      let at = state.frameIdx;
+      frames.forEach((vals, k) => {
+        if (k === 0 && frames.length > 1 && emptyOne) { doc.frames[0].set(vals); first = 0; at = 0; added++; return; }
+        const i = addFrame(doc, at);
+        if (i < 0) return;
+        doc.frames[i].set(vals);
+        if (added === 0) first = i;
+        at = i; added++;
+      });
+    } else { doc.frames[state.frameIdx].set(frames[0]); added = 1; }
+    state.frameIdx = first;
+    preview = null; previewPal = null;
+    if (fps) { state.fps = fps; }
     changed();
-    flash('converted');
+    restartPlay();
+    flash(dest === 'new' ? (total > added ? `added ${added} of ${total} frames` : `added ${added} frames`) : 'converted');
   }
 
   function openConvert(src) {
@@ -737,7 +755,22 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     getConv().open(src);
   }
 
+  async function decodeGif(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.length < 4 || String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) !== 'GIF8') return null;
+    const reader = new GifReader(bytes);
+    if (Math.max(reader.width, reader.height) > MAX_IMPORT_EDGE) return null;
+    const g = gifFrames(reader, MAX_FRAMES);
+    return { frames: g.frames, w: g.w, h: g.h, delays: g.delays };
+  }
+
   async function decodeImageFile(file) {
+    if (file.type === 'image/gif' || /\.gif$/i.test(file.name || '')) {
+      try {
+        const g = await decodeGif(file);
+        if (g) return g;
+      } catch (e) { /* fall back to a single frame */ }
+    }
     let bmp = null, url = '';
     try {
       if (window.createImageBitmap) bmp = await createImageBitmap(file);
@@ -762,7 +795,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
       const c = cv.getContext('2d', { willReadFrequently: true });
       c.imageSmoothingQuality = 'high';
       c.drawImage(src, 0, 0, w, hh);
-      return { rgba: c.getImageData(0, 0, w, hh).data, w, h: hh };
+      return { frames: [c.getImageData(0, 0, w, hh).data], w, h: hh };
     } finally {
       if (bmp && bmp.close) bmp.close();
       if (url) URL.revokeObjectURL(url);
@@ -774,7 +807,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     try {
       const img = await decodeImageFile(file);
       if (destroyed) return;
-      openConvert({ kind: 'image', rgba: img.rgba, w: img.w, h: img.h, name: file.name || 'image' });
+      openConvert({ kind: 'image', frames: img.frames, w: img.w, h: img.h, delays: img.delays, name: file.name || 'image' });
     } catch (e) { flash('could not read image'); }
   }
   fileIn.addEventListener('change', () => {
@@ -889,7 +922,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   el.reduce.addEventListener('click', () => {
     const { doc } = state;
     openConvert({
-      kind: 'frame', rgba: frameToRGBA(doc, state.frameIdx), w: doc.w, h: doc.h, name: `frame ${state.frameIdx + 1}`,
+      kind: 'frame', frames: [frameToRGBA(doc, state.frameIdx)], w: doc.w, h: doc.h, name: `frame ${state.frameIdx + 1}`,
     });
   });
 

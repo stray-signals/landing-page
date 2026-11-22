@@ -101,6 +101,213 @@ export function downscale(rgba, sw, sh, N, { fit = 'crop' } = {}) {
   return { rgb, alpha };
 }
 
+// ── gif frames ───────────────────────────────────────────────────
+// Composites a GifReader's frames onto full-canvas RGBA frames, following disposal rules.
+export function gifFrames(reader, max) {
+  const w = reader.width, h = reader.height, n = Math.min(reader.numFrames(), max);
+  let canvas = new Uint8ClampedArray(w * h * 4);
+  const frames = [], delays = [];
+  for (let i = 0; i < n; i++) {
+    const info = reader.frameInfo(i);
+    const before = info.disposal === 3 ? canvas.slice() : null;
+    const buf = canvas.slice();
+    reader.decodeAndBlitFrameRGBA(i, buf);
+    frames.push(buf.slice());
+    delays.push(info.delay || 0);
+    canvas = buf;
+    if (info.disposal === 2) {
+      for (let y = info.y; y < Math.min(h, info.y + info.height); y++) {
+        canvas.fill(0, (y * w + info.x) * 4, (y * w + Math.min(w, info.x + info.width)) * 4);
+      }
+    } else if (info.disposal === 3 && before) canvas = before;
+  }
+  return { w, h, frames, delays };
+}
+
+// ── pixel art detection ──────────────────────────────────────────
+const gcd = (a, b) => { while (b) { [a, b] = [b, a % b]; } return a; };
+const keyAt = (d, i) => (d[i + 3] === 0 ? 0 : ((d[i] << 24) | (d[i + 1] << 16) | (d[i + 2] << 8) | d[i + 3]) >>> 0 || 1);
+
+// gcd of run lengths (edge-touching runs skipped) and the unique color count (capped at 257)
+function runInfo(rgba, w, h) {
+  const colors = new Set();
+  for (let i = 0; i < w * h && colors.size <= 256; i++) colors.add(keyAt(rgba, i * 4));
+  let g = 0;
+  if (colors.size > 256) return { g, colors: colors.size };
+  for (let y = 0; y < h && g !== 1; y++) {
+    let start = 0;
+    for (let x = 1; x <= w; x++) {
+      if (x < w && keyAt(rgba, (y * w + x) * 4) === keyAt(rgba, (y * w + start) * 4)) continue;
+      if (start > 0 && x < w) g = gcd(g, x - start);
+      start = x;
+    }
+  }
+  for (let x = 0; x < w && g !== 1; x++) {
+    let start = 0;
+    for (let y = 1; y <= h; y++) {
+      if (y < h && keyAt(rgba, (y * w + x) * 4) === keyAt(rgba, (start * w + x) * 4)) continue;
+      if (start > 0 && y < h) g = gcd(g, y - start);
+      start = y;
+    }
+  }
+  return { g, colors: colors.size };
+}
+
+export function pixelScale(rgba, w, h) {
+  const { g, colors } = runInfo(rgba, w, h);
+  return colors > 256 || g < 2 ? 1 : g;
+}
+
+function opaqueColorCount(rgba, w, h, set = new Set()) {
+  for (let i = 0; i < w * h && set.size <= 64; i++) if (rgba[i * 4 + 3] >= 128) set.add(keyAt(rgba, i * 4));
+  return set;
+}
+
+export function isPixelArt(rgba, w, h) {
+  return pixelScale(rgba, w, h) > 1 || opaqueColorCount(rgba, w, h).size <= 64;
+}
+
+// The one exact color covering >= 95% of the opaque edge pixels of frame 0, or null.
+export function borderColor(frames, w, h) {
+  const f = frames && frames[0];
+  if (!f || w < 1 || h < 1) return null;
+  const counts = new Map();
+  let total = 0;
+  const add = (x, y) => {
+    const i = (y * w + x) * 4;
+    if (f[i + 3] < 128) return;
+    const k = (f[i] << 16) | (f[i + 1] << 8) | f[i + 2];
+    counts.set(k, (counts.get(k) || 0) + 1);
+    total++;
+  };
+  for (let x = 0; x < w; x++) { add(x, 0); if (h > 1) add(x, h - 1); }
+  for (let y = 1; y < h - 1; y++) { add(0, y); if (w > 1) add(w - 1, y); }
+  if (!total) return null;
+  for (const [k, n] of counts) if (n * 100 >= total * 95) return [k >> 16, (k >> 8) & 255, k & 255];
+  return null;
+}
+
+// Every frame ends up on the same N x N grid with the same crop and scale.
+export function prepareSource(frames, w, h, N, { removeBg = false } = {}) {
+  let scale = 0, big = false;
+  const uniq = new Set();
+  for (const f of frames) {
+    const { g, colors } = runInfo(f, w, h);
+    if (colors > 256) big = true;
+    if (g > 1) scale = scale ? gcd(scale, g) : g;
+    opaqueColorCount(f, w, h, uniq);
+  }
+  scale = big || scale < 2 ? 1 : scale;
+  const pixelArt = scale > 1 || uniq.size <= 64;
+  if (!pixelArt) return { frames: frames.map(f => downscale(f, w, h, N, { fit: 'crop' })), pixelArt };
+
+  const bg = removeBg ? borderColor(frames, w, h) : null;
+  const nw = Math.max(1, Math.floor(w / scale)), nh = Math.max(1, Math.floor(h / scale)), half = scale >> 1;
+  const nat = frames.map(f => {
+    const o = new Uint8ClampedArray(nw * nh * 4);
+    for (let y = 0; y < nh; y++) {
+      for (let x = 0; x < nw; x++) {
+        const i = ((y * scale + half) * w + x * scale + half) * 4;
+        o.set(f.subarray(i, i + 4), (y * nw + x) * 4);
+        if (bg) {
+          const j = (y * nw + x) * 4;
+          if (o[j] === bg[0] && o[j + 1] === bg[1] && o[j + 2] === bg[2]) o[j + 3] = 0;
+        }
+      }
+    }
+    return o;
+  });
+  let x0 = nw, y0 = nh, x1 = -1, y1 = -1;
+  for (const f of nat) {
+    for (let y = 0; y < nh; y++) {
+      for (let x = 0; x < nw; x++) {
+        if (f[(y * nw + x) * 4 + 3] < 128) continue;
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) { x0 = 0; y0 = 0; x1 = nw - 1; y1 = nh - 1; }
+  x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); x1 = Math.min(nw - 1, x1 + 1); y1 = Math.min(nh - 1, y1 + 1);
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  const fits = bw <= N && bh <= N;
+  const tw = fits ? bw : (bw >= bh ? N : Math.max(1, Math.round(bw * N / bh)));
+  const th = fits ? bh : (bh >= bw ? N : Math.max(1, Math.round(bh * N / bw)));
+  const ox = Math.floor((N - tw) / 2), oy = Math.floor((N - th) / 2);
+  const out = nat.map(f => {
+    const rgb = new Float32Array(N * N * 3), alpha = new Uint8Array(N * N);
+    for (let ty = 0; ty < th; ty++) {
+      for (let tx = 0; tx < tw; tx++) {
+        const sx0 = x0 + Math.floor(tx * bw / tw), sx1 = Math.max(sx0 + 1, x0 + Math.floor((tx + 1) * bw / tw));
+        const sy0 = y0 + Math.floor(ty * bh / th), sy1 = Math.max(sy0 + 1, y0 + Math.floor((ty + 1) * bh / th));
+        const counts = new Map();
+        let opaque = 0, total = 0, best = -1, bc = 0;
+        for (let sy = sy0; sy < sy1; sy++) {
+          for (let sx = sx0; sx < sx1; sx++) {
+            const i = (sy * nw + sx) * 4;
+            total++;
+            if (f[i + 3] < 128) continue;
+            opaque++;
+            const k = (f[i] << 16) | (f[i + 1] << 8) | f[i + 2], c = (counts.get(k) || 0) + 1;
+            counts.set(k, c);
+            if (c > bc) { bc = c; best = k; }
+          }
+        }
+        if (opaque * 2 < total || best < 0) continue;
+        const o = (oy + ty) * N + ox + tx;
+        rgb[o * 3] = best >> 16; rgb[o * 3 + 1] = (best >> 8) & 255; rgb[o * 3 + 2] = best & 255;
+        alpha[o] = 255;
+      }
+    }
+    return { rgb, alpha };
+  });
+  return { frames: out, pixelArt };
+}
+
+// Up to `max` colors from the opaque pixels of all frames. Exact when few enough, else k-means.
+export function imageColors(rgbFrames, alphaFrames, max) {
+  const counts = new Map();
+  rgbFrames.forEach((rgb, fi) => {
+    const alpha = alphaFrames[fi];
+    for (let i = 0; i < alpha.length; i++) {
+      if (alpha[i] < 128) continue;
+      const k = (Math.round(rgb[i * 3]) << 16) | (Math.round(rgb[i * 3 + 1]) << 8) | Math.round(rgb[i * 3 + 2]);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  });
+  const px = [...counts].map(([k, n]) => ({ c: [k >> 16, (k >> 8) & 255, k & 255], n }));
+  if (px.length <= max) return px.map(p => p.c);
+  px.forEach(p => { p.l = lum(p.c[0], p.c[1], p.c[2]); });
+  px.sort((a, b) => a.l - b.l);
+  const total = px.reduce((a, p) => a + p.n, 0), used = new Set();
+  let cen = [], acc = 0, j = 0;
+  for (let k = 0; k < max; k++) {
+    const goal = (k + 0.5) / max * total;
+    while (j < px.length - 1 && acc + px[j].n < goal) { acc += px[j].n; j++; }
+    let pick = j;
+    while (used.has(pick) && pick < px.length - 1) pick++;
+    while (used.has(pick) && pick > 0) pick--;
+    used.add(pick);
+    cen.push(px[pick].c.slice());
+  }
+  const owner = new Int32Array(px.length);
+  for (let it = 0; it < 10; it++) {
+    const sum = cen.map(() => [0, 0, 0, 0]);
+    px.forEach((p, i) => {
+      let bj = 0, bd = Infinity;
+      for (let q = 0; q < max; q++) {
+        const c = cen[q], d = (p.c[0] - c[0]) ** 2 + (p.c[1] - c[1]) ** 2 + (p.c[2] - c[2]) ** 2;
+        if (d < bd) { bd = d; bj = q; }
+      }
+      owner[i] = bj;
+      const s = sum[bj];
+      s[0] += p.c[0] * p.n; s[1] += p.c[1] * p.n; s[2] += p.c[2] * p.n; s[3] += p.n;
+    });
+    cen = cen.map((c, q) => (sum[q][3] ? [sum[q][0] / sum[q][3], sum[q][1] / sum[q][3], sum[q][2] / sum[q][3]] : c));
+  }
+  return cen.map(c => c.map(v => Math.round(v)));
+}
+
 export function adjust(rgb, bright, contrast) {
   const out = new Float32Array(rgb.length);
   const br = bright * 2.2, ct = (contrast + 100) / 100;
@@ -121,7 +328,7 @@ export function targetColors(paletteHex, depth) {
   if (!all.length) return [];
   const byL = all.slice().sort((a, b) => a.l - b.l);
   let picked;
-  if (depth === 'all') picked = byL;
+  if (depth === 'palette' || depth === 'image') picked = byL;
   else {
     const dark = byL[0], light = byL[byL.length - 1];
     picked = dark === light ? [dark] : [dark, light];
@@ -279,7 +486,7 @@ function bandRender(rgb, N, K, tiles, { bands, speck, outline }) {
 }
 
 // rgb/alpha are the adjusted source at N x N. Returns doc values (idx + 1, 0 = empty).
-// opts.rgb: match colors in rgb space (use for 'all'); otherwise dither on brightness.
+// opts.rgb: match colors in rgb space (use for 'palette' and 'image'); otherwise dither on brightness.
 export function convert(rgb, alpha, N, targets, opts = {}) {
   const { method = 'bayer4', tiles = PATTERN_SETS.bayer.tiles, bands = 5, speck = 0, outline = 'off' } = opts;
   const n = N * N, K = targets.length, res = new Uint16Array(n);

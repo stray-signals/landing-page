@@ -1,7 +1,7 @@
 // Pixel editor core: document model, drawing, history, frames, export. Pure, no DOM.
-import { GifWriter } from '/tools/vendor/omggif.js';
+import { GifWriter } from '../vendor/omggif.js';
 
-export const SIZES = [16, 32, 64];
+export const SIZES = [16, 32, 64, 128];
 export const MAX_FRAMES = 24;
 export const MAX_COLORS = 32;
 export const HALF = 0x8000;
@@ -171,7 +171,7 @@ export function toSpritesheetRGBA(doc) {
 }
 
 // ── share ────────────────────────────────────────────────────────
-const VERSION = 1;
+const VERSION = 2;
 
 async function pipe(bytes, stream) {
   const s = new Blob([bytes]).stream().pipeThrough(stream);
@@ -193,21 +193,34 @@ function fromB64Url(str) {
 
 export async function encodeDoc(doc) {
   const np = doc.palette.length, nf = doc.frames.length, cells = doc.w * doc.h;
-  const bytes = new Uint8Array(5 + np * 3 + 1 + nf * cells * 2);
+  const bytes = new Uint8Array(5 + np * 3 + 1 + nf * cells);
   let p = 0;
   bytes[p++] = VERSION; bytes[p++] = doc.w; bytes[p++] = doc.h; bytes[p++] = np;
   for (const hex of doc.palette) for (const c of hexToRgb(hex)) bytes[p++] = c;
   bytes[p++] = nf;
-  for (const f of doc.frames) for (let i = 0; i < cells; i++) { bytes[p++] = f[i] & 255; bytes[p++] = f[i] >> 8; }
+  // 1 byte per pixel (index | 0x80 for half); later frames store the XOR with the previous frame
+  let prev = null;
+  for (const f of doc.frames) {
+    const raw = new Uint8Array(cells);
+    for (let i = 0; i < cells; i++) {
+      const v = (f[i] & 0x7f) | (f[i] & HALF ? 0x80 : 0);
+      raw[i] = v;
+      bytes[p + i] = prev ? v ^ prev[i] : v;
+    }
+    prev = raw;
+    p += cells;
+  }
   return toB64Url(await pipe(bytes.subarray(0, p), new CompressionStream('deflate-raw')));
 }
 
 export async function decodeDoc(str) {
   try {
-    if (typeof str !== 'string' || !/^[A-Za-z0-9_-]+$/.test(str) || str.length > 200000) return null;
+    if (typeof str !== 'string' || !/^[A-Za-z0-9_-]+$/.test(str) || str.length > 3000000) return null;
     const b = await pipe(fromB64Url(str), new DecompressionStream('deflate-raw'));
     let p = 0;
-    if (b.length < 6 || b[p++] !== VERSION) return null;
+    if (b.length < 6) return null;
+    const ver = b[p++];
+    if (ver !== 1 && ver !== 2) return null;
     const w = b[p++], h = b[p++], np = b[p++];
     if (w !== h || !SIZES.includes(w) || np < 1 || np > MAX_COLORS) return null;
     const palette = [];
@@ -216,20 +229,38 @@ export async function decodeDoc(str) {
       palette.push('#' + [b[p], b[p + 1], b[p + 2]].map(n => n.toString(16).padStart(2, '0')).join(''));
       p += 3;
     }
+    if (p >= b.length) return null;
     const nf = b[p++];
     if (nf < 1 || nf > MAX_FRAMES) return null;
     const cells = w * h;
-    if (b.length !== p + nf * cells * 2) return null;
     const frames = [];
-    for (let k = 0; k < nf; k++) {
-      const f = new Uint16Array(cells);
-      for (let i = 0; i < cells; i++) {
-        const v = b[p] | (b[p + 1] << 8);
-        p += 2;
-        if ((v & 0x7fff) > np) return null;
-        f[i] = v;
+    if (ver === 1) {
+      if (b.length !== p + nf * cells * 2) return null;
+      for (let k = 0; k < nf; k++) {
+        const f = new Uint16Array(cells);
+        for (let i = 0; i < cells; i++) {
+          const v = b[p] | (b[p + 1] << 8);
+          p += 2;
+          if ((v & 0x7fff) > np) return null;
+          f[i] = v;
+        }
+        frames.push(f);
       }
-      frames.push(f);
+    } else {
+      if (b.length !== p + nf * cells) return null;
+      let prev = null;
+      for (let k = 0; k < nf; k++) {
+        const raw = new Uint8Array(cells), f = new Uint16Array(cells);
+        for (let i = 0; i < cells; i++) {
+          const v = prev ? b[p + i] ^ prev[i] : b[p + i];
+          if ((v & 0x7f) > np) return null;
+          raw[i] = v;
+          f[i] = (v & 0x7f) | (v & 0x80 ? HALF : 0);
+        }
+        p += cells;
+        prev = raw;
+        frames.push(f);
+      }
     }
     return { w, h, palette, frames };
   } catch (e) { return null; }
@@ -267,7 +298,7 @@ export function toCode(doc, idx) {
 }
 
 // ── gif ──────────────────────────────────────────────────────────
-export function toGif(doc, { scale = 8, fps = 6 } = {}) {
+export function toGif(doc, { scale = doc.w >= 128 ? 4 : 8, fps = 6 } = {}) {
   const np = doc.palette.length, bg = hexToRgb(BG_HEX);
   const colors = doc.palette.map(hexToRgb);
   const table = colors.map(c => (c[0] << 16) | (c[1] << 8) | c[2]);
