@@ -26,6 +26,14 @@ export const APPS = {
     description: 'draw pixel art',
     mount: (bodyEl) => import('/tools/pixel/pixel.tool.js').then(m => m.mountPixelTool(bodyEl, { mode: 'window' })),
   },
+  arcade: {
+    id: 'arcade',
+    windowId: 'win-arcade',
+    title: 'arcade',
+    pageUrl: '/tools/arcade/',
+    description: 'play a game',
+    mount: (bodyEl) => import('/tools/arcade/arcade.tool.js').then(m => m.mountArcade(bodyEl, { mode: 'window' })),
+  },
   transmissions: {
     id: 'transmissions',
     windowId: 'win-transmissions',

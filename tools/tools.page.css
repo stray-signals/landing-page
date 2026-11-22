@@ -54,4 +54,5 @@ body::after {
 }
 .tools-page-main .qr-tool { height: auto; overflow: visible; background: transparent; padding: 0; }
 .tools-page-main .palette-tool { height: calc(100vh - 118px); min-height: 520px; border: 1px solid var(--color-border); }
+.tools-page-main .arcade-tool { height: calc(100vh - 118px); min-height: 440px; border: 1px solid var(--color-border); }
 .tools-page-main .pixel-tool { height: calc(100vh - 118px); min-height: 520px; border: 1px solid var(--color-border); }

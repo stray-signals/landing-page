@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /transmissions/{messageId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 280
+                    && request.resource.data.author is string
+                    && request.resource.data.isStray == false
+                    && request.resource.data.createdAt == request.time;
+
+      allow create: if request.auth != null
+                    && request.auth.uid == "KBmq6BOEj7gjdJPCZ69FUPtg24Q2"
+                    && request.resource.data.isStray == true;
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == "KBmq6BOEj7gjdJPCZ69FUPtg24Q2";
+
+      allow update: if false;
+    }
+
+    // larmor high scores (arcade). Anyone can read and add one; only stray can delete.
+    // Scores come from the visitor's browser, so these checks only block obvious junk.
+    match /larmor_scores/{scoreId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(['initials', 'score', 'createdAt'])
+                    && request.resource.data.initials is string
+                    && request.resource.data.initials.matches('^[A-Z]{3}$')
+                    && request.resource.data.score is int
+                    && request.resource.data.score > 0
+                    && request.resource.data.score <= 100000
+                    && request.resource.data.createdAt == request.time;
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == "KBmq6BOEj7gjdJPCZ69FUPtg24Q2";
+
+      allow update: if false;
+    }
+  }
+}

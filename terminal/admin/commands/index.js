@@ -2,8 +2,9 @@ import { REGISTRY }   from '../../commands/index.js';
 import logCmd         from './log.js';
 import spritesheet    from './spritesheet.js';
 import theme          from './theme.js';
+import scores         from './scores.js';
 
-const adminCommands = [logCmd, spritesheet, theme];
+const adminCommands = [logCmd, spritesheet, theme, scores];
 
 // Start with all public commands, then layer in admin-only ones
 export const ADMIN_REGISTRY = new Map(REGISTRY);

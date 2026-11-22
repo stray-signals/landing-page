@@ -207,6 +207,13 @@ body {
   height: clamp(480px, 74vh, 700px);
 }
 
+#win-arcade {
+  left: clamp(300px, 34vw, 560px);
+  top: max(48px, 8vh);
+  width: clamp(520px, 46vw, 760px);
+  height: clamp(440px, 66vh, 620px);
+}
+
 .app-body { height: 100%; overflow: hidden; color: var(--color-primary); }
 
 /* ── Taskbar ───────────────────────────────────────────────────────── */
