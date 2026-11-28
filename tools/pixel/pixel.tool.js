@@ -1,4 +1,5 @@
 // Pixel art editor UI. mountPixelTool(container, { mode }) -> { destroy }
+import { ensureCss, download } from '/shared/dom.js';
 import {
   SIZES, MAX_FRAMES, MAX_COLORS, HALF, createDoc, setPixel, line, rect, floodFill,
   createHistory, snapshotOf, addFrame, duplicateFrame, deleteFrame, moveFrame, resizeDoc,
@@ -50,16 +51,6 @@ function h(tag, props = {}, kids = []) {
   return e;
 }
 
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
 function readSession() {
   try {
     const p = JSON.parse(sessionStorage.getItem(STATE_KEY) || 'null');
@@ -68,12 +59,7 @@ function readSession() {
 }
 
 export function mountPixelTool(container, { mode = 'window' } = {}) {
-  if (!document.querySelector('link[href="' + CSS_HREF + '"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = CSS_HREF;
-    document.head.appendChild(link);
-  }
+  ensureCss(CSS_HREF);
 
   const state = {
     doc: createDoc(32), frameIdx: 0, tool: 'pencil', colorIdx: 0, half: false, mirror: false,
@@ -93,7 +79,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let stroke = null;          // active pointer stroke
   let colorEditSnap = false;  // snapshot already taken for the current color-input edit
 
-  const root = h('div', { class: 'pixel-tool', tabindex: '-1' });
+  const root = h('div', { class: 'pixel-tool app-surface', tabindex: '-1' });
   root.dataset.mode = mode;
   root.innerHTML = `<div class="px-layout">
     <div class="px-strip">

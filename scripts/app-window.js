@@ -1,5 +1,6 @@
 import { CRTWindow, WindowManager } from './window.js';
 import { APPS } from './apps.js';
+import { isPhone } from '/shared/screen.js';
 
 const wins = new Map(); // appId -> CRTWindow
 const pending = new Map(); // appId -> Promise (creation in flight)
@@ -77,7 +78,7 @@ export async function openApp(appId) {
   const app = APPS[appId];
   if (!app) return false;
 
-  if (window.matchMedia('(max-width: 700px)').matches) {
+  if (isPhone()) {
     goToAppPage(app);
     return;
   }

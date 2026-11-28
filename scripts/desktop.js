@@ -1,5 +1,6 @@
 import { CRTWindow, WindowManager } from './window.js';
 import { APPS } from './apps.js';
+import { isPhone } from '/shared/screen.js';
 import { openApp } from './app-window.js';
 
 const avatarWin   = new CRTWindow('win-avatar');
@@ -40,6 +41,6 @@ try {
   if (reopen && APPS[reopen]) {
     sessionStorage.removeItem('stray_reopen');
     // Phones open apps as pages, so reopening here would bounce straight back.
-    if (!window.matchMedia('(max-width: 700px)').matches) openApp(reopen);
+    if (!isPhone()) openApp(reopen);
   }
 } catch { /* ignore */ }

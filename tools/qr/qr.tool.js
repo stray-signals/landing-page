@@ -1,4 +1,5 @@
 // QR tool UI. mountQrTool(container, { mode }) -> { destroy, refreshTheme }
+import { ensureCss, download } from '/shared/dom.js';
 import { renderQrSvg, parseColor, DOT_STYLES, CORNER_STYLES } from './qr.render.js';
 
 const STORAGE_KEY = 'stray_qr_state';
@@ -39,16 +40,6 @@ function slugFor(text) {
   return slug || 'code';
 }
 
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
 function themeColors() {
   const cs = getComputedStyle(document.documentElement);
   const get = (v, fb) => parseColor(cs.getPropertyValue(v), fb);
@@ -75,12 +66,7 @@ function downscale(dataUrl, max = 512) {
 }
 
 export function mountQrTool(container, { mode = 'window' } = {}) {
-  if (!document.querySelector('link[href="' + CSS_HREF + '"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = CSS_HREF;
-    document.head.appendChild(link);
-  }
+  ensureCss(CSS_HREF);
 
   const state = loadState();
   if (!DOT_STYLES.includes(state.dots)) state.dots = DEFAULTS.dots;

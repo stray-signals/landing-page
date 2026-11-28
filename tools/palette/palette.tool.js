@@ -1,4 +1,5 @@
 // Palette tool UI. mountPaletteTool(container, { mode }) -> { destroy }
+import { ensureCss, download } from '/shared/dom.js';
 import {
   MODES, CVD_TYPES, generatePalette, tints, simulate, inkFor, contrast, normalizeHex,
   hexToHsl, hslToHex, extractPalette, paletteToTheme, toHash, fromHash, formatHex, formatCss, formatJson,
@@ -59,16 +60,6 @@ function writeSaved(list) {
   try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, MAX_SAVED))); } catch (e) { /* ignore */ }
 }
 
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
 function h(tag, props = {}, kids = []) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
@@ -83,12 +74,7 @@ function h(tag, props = {}, kids = []) {
 }
 
 export function mountPaletteTool(container, { mode = 'window' } = {}) {
-  if (!document.querySelector('link[href="' + CSS_HREF + '"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = CSS_HREF;
-    document.head.appendChild(link);
-  }
+  ensureCss(CSS_HREF);
 
   const state = loadState(mode);
   const uid = 'pal' + Math.random().toString(36).slice(2, 7);
@@ -96,7 +82,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
   let popIndex = -1;      // index of bar with adjust popover, -1 = none
   let msgTimer = 0;
 
-  const root = h('div', { class: 'palette-tool', tabindex: '-1' });
+  const root = h('div', { class: 'palette-tool app-surface', tabindex: '-1' });
   root.dataset.mode = mode;
   root.innerHTML = `<div class="pal-layout">
     <div class="pal-main" data-role="main">

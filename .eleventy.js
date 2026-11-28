@@ -11,10 +11,10 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("avatar");
   eleventyConfig.addPassthroughCopy("scripts");
   eleventyConfig.addPassthroughCopy("terminal");
-  eleventyConfig.addPassthroughCopy("tools");
-  eleventyConfig.ignores.add("tools/**/*.html");
-  eleventyConfig.addPassthroughCopy("art");
-  eleventyConfig.ignores.add("art/**/*.html");
+  eleventyConfig.addPassthroughCopy("shared");
+  // tools/ and art/ hold .njk page sources; copy only the assets
+  eleventyConfig.addPassthroughCopy("tools/**/*.{js,css,mjs}");
+  eleventyConfig.addPassthroughCopy("art/**/*.{js,css}");
   eleventyConfig.addPassthroughCopy("root/media");
   eleventyConfig.addPassthroughCopy("root/transmissions/log.json");
   eleventyConfig.addPassthroughCopy("CNAME");

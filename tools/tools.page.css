@@ -53,6 +53,12 @@ body::after {
   padding: 24px 20px 48px;
 }
 .tools-page-main .qr-tool { height: auto; overflow: visible; background: transparent; padding: 0; }
-.tools-page-main .palette-tool { height: calc(100vh - 118px); min-height: 520px; border: 1px solid var(--color-border); }
-.tools-page-main .arcade-tool { height: calc(100vh - 118px); min-height: 440px; border: 1px solid var(--color-border); }
-.tools-page-main .pixel-tool { height: calc(100vh - 118px); min-height: 520px; border: 1px solid var(--color-border); }
+.tools-page-main .app-surface {
+  height: calc(100vh - 118px);
+  min-height: var(--surface-min, 360px);
+  border: 1px solid var(--color-border);
+}
+.tools-page-main .palette-tool { --surface-min: 520px; }
+.tools-page-main .arcade-tool { --surface-min: 440px; }
+.tools-page-main .pixel-tool { --surface-min: 520px; }
+.tools-page-main .aurora-art { --surface-min: 360px; }

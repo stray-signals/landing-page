@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>straysignals.dev :: qr</title>
-  <meta name="description" content="Make a QR code. Pick the dots, corners, colors and an optional logo; download PNG or SVG.">
+  <title>straysignals.dev :: {{ app }}</title>
+  <meta name="description" content="{{ description }}">
   <link rel="icon" href="/favicon.png">
   <link rel="stylesheet" href="/tools/tools.page.css">
   <script type="module">
@@ -18,16 +18,16 @@
 </head>
 <body>
   <header class="tools-header">
-    <span><a href="/">straysignals.dev</a> <span class="dim">/ tools / qr</span></span>
+    <span><a href="/">straysignals.dev</a> <span class="dim">/ {{ crumb }}</span></span>
     <a href="/" id="back">← back to the desktop</a>
   </header>
-  <main class="tools-page-main" id="qr-root"></main>
+  <main class="tools-page-main" id="{{ rootId }}"></main>
   <script type="module">
-    import { mountQrTool } from '/tools/qr/qr.tool.js';
+    import { {{ mount }} } from '{{ module }}';
     document.getElementById('back').addEventListener('click', () => {
-      try { sessionStorage.setItem('stray_reopen', 'qr'); } catch (e) { /* ignore */ }
+      try { sessionStorage.setItem('stray_reopen', '{{ app }}'); } catch (e) { /* ignore */ }
     });
-    mountQrTool(document.getElementById('qr-root'), { mode: 'page' });
+    {{ mount }}(document.getElementById('{{ rootId }}'), { mode: 'page' });
   </script>
 </body>
 </html>

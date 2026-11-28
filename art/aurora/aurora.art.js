@@ -1,5 +1,8 @@
 // Aurora: a night sky over a lake. Move the pointer through it to stir the lights.
 // mountAurora(container, { mode }) -> { destroy }
+import { ensureCss } from '/shared/dom.js';
+import { isOnScreen } from '/shared/screen.js';
+
 const CSS_HREF = '/art/aurora/aurora.art.css';
 
 // Each palette is three aurora bands, [r, g, b].
@@ -20,14 +23,6 @@ const RIDGE_POINTS = 60;
 const STAR_COUNT = 160;
 const BAND_STEP = 3;       // px between aurora columns
 
-function ensureCss() {
-  if (document.querySelector(`link[href="${CSS_HREF}"]`)) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = CSS_HREF;
-  document.head.appendChild(link);
-}
-
 function ridge(seed, base, amp) {
   const pts = [];
   for (let i = 0; i <= RIDGE_POINTS; i++) {
@@ -46,9 +41,9 @@ const RIDGES = [
 ];
 
 export function mountAurora(container, { mode = 'window' } = {}) {
-  ensureCss();
+  ensureCss(CSS_HREF);
   container.innerHTML = `
-    <div class="aurora-art aurora-${mode}">
+    <div class="aurora-art app-surface aurora-${mode}">
       <canvas class="au-sky" aria-label="an aurora over mountains and a lake" role="img"></canvas>
       <div class="au-controls">
         <button type="button" class="au-btn" data-act="palette">shift colors</button>
@@ -189,18 +184,10 @@ export function mountAurora(container, { mode = 'window' } = {}) {
     if (shoot.a > 0) { shoot.x -= 7; shoot.y += 2.8; shoot.a -= 0.025; }
   }
 
-  // Not drawn when the tab is hidden or the window is minimized/closed.
-  function onScreen() {
-    if (document.hidden) return false;
-    const win = root.closest('.crt-window');
-    if (win && (win.classList.contains('is-minimized') || win.classList.contains('is-closed'))) return false;
-    return canvas.getClientRects().length > 0;
-  }
-
   function loop() {
     raf = 0;
     if (!running) return;
-    if (!onScreen()) { idleTimer = setTimeout(loop, 500); return; }
+    if (!isOnScreen(canvas)) { idleTimer = setTimeout(loop, 500); return; }
     step();
     draw();
     raf = requestAnimationFrame(loop);

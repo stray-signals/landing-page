@@ -1,4 +1,6 @@
 // Arcade: a terminal-style game picker. mountArcade(container, { mode }) -> { destroy }
+import { ensureCss } from '/shared/dom.js';
+import { isOnScreen } from '/shared/screen.js';
 const CSS_HREF = '/tools/arcade/arcade.tool.css';
 const HI_KEY = 'stray_arcade_hi';
 const WIN_ID = 'win-arcade';
@@ -42,15 +44,10 @@ function readColors() {
 }
 
 export function mountArcade(container, { mode = 'window' } = {}) {
-  if (!document.querySelector('link[href="' + CSS_HREF + '"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = CSS_HREF;
-    document.head.appendChild(link);
-  }
+  ensureCss(CSS_HREF);
 
   const root = document.createElement('div');
-  root.className = 'arcade-tool';
+  root.className = 'arcade-tool app-surface';
   root.tabIndex = -1;
   container.appendChild(root);
 
@@ -179,7 +176,7 @@ export function mountArcade(container, { mode = 'window' } = {}) {
   };
   const onVisibility = () => {
     if (document.hidden) { if (game) game.pause(); }
-    else if (view === 'picker' && game) game.resume();
+    else if (view === 'picker' && game && isOnScreen(root)) game.resume();
   };
   const onFocus = () => refreshColors();
 
