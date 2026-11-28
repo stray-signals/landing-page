@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "eleventy && node build/cache-bust.mjs",
-    "serve": "eleventy --serve"
+    "serve": "eleventy --serve",
+    "test": "node tools/pixel/pixel.core.check.mjs && node tools/pixel/pixel.convert.check.mjs"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0"
