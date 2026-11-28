@@ -1,9 +1,9 @@
 import { getPat, storePat }    from '../auth.js';
 import { showModal, closeModal } from '../../modal.js';
 
-const REPO      = 'stray-signals/landing-page';
+const REPO = 'stray-signals/landing-page';
 const FILE_PATH = 'root/transmissions/log.json';
-const API_BASE  = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
+const API_BASE = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 
 const LOG_TYPES = ['drift', 'signal', 'fragment'];
 
@@ -25,7 +25,7 @@ async function fetchLog(pat) {
 
 async function commitLog(pat, log, sha, message) {
   const res = await fetch(API_BASE, {
-    method:  'PUT',
+    method: 'PUT',
     headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, content: btoa(JSON.stringify(log, null, 2) + '\n'), sha }),
   });
@@ -38,7 +38,7 @@ function makeId(date, target) {
 
 function openLogModal(addMessage) {
   showModal({
-    title:  'new transmission',
+    title: 'new transmission',
     fields: [
       { name: 'type',   label: `type  (${LOG_TYPES.join(' / ')})`, type: 'text' },
       { name: 'target', label: 'target domain',                     type: 'text' },
@@ -52,13 +52,13 @@ function openLogModal(addMessage) {
 
       closeModal();
 
-      const pat   = getPat();
-      const date  = new Date().toISOString().slice(0, 10);
+      const pat = getPat();
+      const date = new Date().toISOString().slice(0, 10);
       const entry = {
-        id:            makeId(date, values.target),
-        type:          values.type.trim(),
+        id: makeId(date, values.target),
+        type: values.type.trim(),
         date,
-        target:        values.target.trim(),
+        target: values.target.trim(),
         signal_status: 'pending',
       };
       if (values.url.trim())  entry.url  = values.url.trim();
@@ -78,7 +78,7 @@ function openLogModal(addMessage) {
 }
 
 export default {
-  name:        'log',
+  name: 'log',
   description: 'add a new transmission log entry',
   handler: () => ({ action: 'adminLog' }),
 };
@@ -90,7 +90,7 @@ export async function handleLog(addMessage) {
   if (!pat) {
     // Prompt for PAT first
     showModal({
-      title:  'github authentication',
+      title: 'github authentication',
       fields: [{ name: 'pat', label: 'personal access token', type: 'password' }],
       onSubmit: async (values, setError) => {
         const token = values.pat.trim();

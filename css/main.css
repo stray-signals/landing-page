@@ -1,11 +1,11 @@
 :root {
-  --color-primary:    #b8ffa0;
+  --color-primary: #b8ffa0;
   --color-primary-dim:#b8e4a0;
-  --color-bg:         #0c100c;
-  --color-border:     #2f4f2f;
-  --color-accent:     #6cb03e;
-  --color-accent-hi:  #8fdf5a;
-  --color-text-blue:  #a0c0e0;
+  --color-bg: #0c100c;
+  --color-border: #2f4f2f;
+  --color-accent: #6cb03e;
+  --color-accent-hi: #8fdf5a;
+  --color-text-blue: #a0c0e0;
 }
 
 @view-transition { navigation: auto; }
@@ -34,7 +34,7 @@ body {
   padding: 0;
 }
 
-/* ── Desktop ──────────────────────────────────────────────────────── */
+/* desktop */
 #desktop {
   position: relative;
   width: 100%;
@@ -42,7 +42,7 @@ body {
   overflow: hidden;
 }
 
-/* ── CRT Window ───────────────────────────────────────────────────── */
+/* crt window */
 :root {
   --titlebar-h: 34px;
 }
@@ -75,8 +75,8 @@ body {
 
 .crt-window.is-maximized {
   left: 0 !important;
-  top:  0 !important;
-  width:  100% !important;
+  top: 0 !important;
+  width: 100% !important;
   height: calc(100% - 42px) !important; /* leave room for taskbar */
   border-radius: 0;
 }
@@ -144,7 +144,7 @@ body {
   overflow: hidden;
 }
 
-/* Resize handles — transparent strips along the border edge */
+/* Resize handles: transparent strips along the border edge */
 .rz {
   position: absolute;
   z-index: 20;
@@ -161,22 +161,22 @@ body {
 /* Default window positions */
 #win-avatar {
   left: max(20px, 4vw);
-  top:  max(24px, 4vh);
-  width:  clamp(240px, 24vw, 360px);
+  top: max(24px, 4vh);
+  width: clamp(240px, 24vw, 360px);
   height: clamp(260px, 34vw, 420px);
 }
 
 #win-terminal {
   left: clamp(280px, 32vw, 460px);
-  top:  max(24px, 4vh);
-  width:  clamp(300px, 42vw, 580px);
+  top: max(24px, 4vh);
+  width: clamp(300px, 42vw, 580px);
   height: clamp(340px, 56vh, 580px);
 }
 
 #win-transmit {
   left: clamp(620px, 70vw, 920px);
-  top:  max(24px, 4vh);
-  width:  clamp(280px, 30vw, 380px);
+  top: max(24px, 4vh);
+  width: clamp(280px, 30vw, 380px);
   height: clamp(340px, 56vh, 540px);
 }
 
@@ -223,7 +223,7 @@ body {
 
 .app-body { height: 100%; overflow: hidden; color: var(--color-primary); }
 
-/* ── Taskbar ───────────────────────────────────────────────────────── */
+/* taskbar */
 #taskbar {
   position: absolute;
   bottom: 0;
@@ -455,7 +455,7 @@ body {
   50% { opacity: 0; }
 }
 
-/* ── ADMIN MODE ───────────────────────────────────────────────────── */
+/* admin mode */
 .dashboard.admin-mode #win-avatar {
   display: none;
 }
@@ -464,7 +464,7 @@ body {
   width: clamp(400px, 60vw, 800px) !important;
 }
 
-/* ── MODAL ────────────────────────────────────────────────────────── */
+/* modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -568,7 +568,7 @@ body {
   background: rgba(108, 176, 62, 0.15);
 }
 
-/* ── CRT EFFECT ───────────────────────────────────────────────────── */
+/* crt effect */
 .crt-overlay {
   position: fixed;
   top: 0;
@@ -598,7 +598,7 @@ body {
 }
 
 
-/* ── RESPONSIVE ───────────────────────────────────────────────────── */
+/* responsive */
 @media (max-width: 700px) {
   /* Stack windows vertically on small screens */
   #win-avatar {
@@ -630,7 +630,7 @@ body {
   }
 }
 
-/* ── TRANSMIT CHAT WINDOW ────────────────────────────────────────────── */
+/* transmit chat window */
 .chat-panel {
   flex: 1;
   min-height: 0;

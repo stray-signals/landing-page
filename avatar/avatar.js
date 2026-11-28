@@ -3,10 +3,10 @@ import { getTimeBlock } from '../scripts/time.js';
 import { INTERACTIONS, INTERACTION_MAP } from './interactions/index.js';
 import { initGaze } from './gaze.js';
 
-const canvas  = document.getElementById('pixelFaceCanvas');
+const canvas = document.getElementById('pixelFaceCanvas');
 const IS_DEEP = getTimeBlock() === 'deep';
 
-// ─── Expression helpers ───────────────────────────────────────────────────────
+// expression helpers
 
 // During deep hours the loading cycle owns the face - block all normal show calls.
 // Use forceShow for interactions that should break through regardless.
@@ -26,10 +26,10 @@ function showInteraction(name) {
   else        show(i.eyes, i.mouth);
 }
 
-// ─── Default state ────────────────────────────────────────────────────────────
+// default state
 
 const LOADING_FACES = ['loadingOne', 'loadingTwo', 'loadingThree', 'loadingFour'];
-let loadingIndex    = 0;
+let loadingIndex = 0;
 let loadingInterval = null;
 
 function startLoadingCycle() {
@@ -58,7 +58,7 @@ function pauseDefault() {
   if (IS_DEEP) stopLoadingCycle();
 }
 
-// ─── Idle timers ──────────────────────────────────────────────────────────────
+// idle timers
 
 let idleTimer10;
 let idleTimer30;
@@ -82,7 +82,7 @@ export function resetIdleTimer() {
   resetIdleTimers();
 }
 
-// ─── Register interactions ────────────────────────────────────────────────────
+// register interactions
 // Interactions with a handler factory call it to get a custom listener.
 // All others get the generic show → optional revert path.
 
@@ -91,7 +91,7 @@ const ctx = { show, forceShow, showFace, setDefault, pauseDefault, resetIdleTime
 for (const interaction of INTERACTIONS) {
   if (!interaction.trigger) continue;
 
-  const target   = interaction.trigger.on === 'canvas' ? canvas : document;
+  const target = interaction.trigger.on === 'canvas' ? canvas : document;
   const listener = interaction.handler
     ? interaction.handler(ctx)
     : () => {
@@ -109,7 +109,7 @@ for (const interaction of INTERACTIONS) {
   target.addEventListener(interaction.trigger.event, listener);
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// init
 
 setDefault();
 resetIdleTimers();

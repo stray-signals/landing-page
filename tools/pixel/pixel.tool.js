@@ -153,7 +153,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   const scratch = document.createElement('canvas');
   const sctx = scratch.getContext('2d');
 
-  // ── helpers ─────────────────────────────────────────────────────
+  // helpers
   const cur = () => state.doc.frames[state.frameIdx];
   const valueNow = () => (state.colorIdx + 1) | (state.half ? HALF : 0);
   const toolValue = () => (state.tool === 'eraser' ? 0 : valueNow());
@@ -171,7 +171,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     c.putImageData(new ImageData(rgba, w, h), 0, 0);
   }
 
-  // ── persistence ─────────────────────────────────────────────────
+  // persistence
   function scheduleSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveNow, 200);
@@ -217,7 +217,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     refreshAll();
   }
 
-  // ── doc mutation ────────────────────────────────────────────────
+  // doc mutation
   function snapshot() { history.push(snapshotOf(state.doc)); touched = true; }
   function changed() { refreshAll(); scheduleSave(); }
 
@@ -234,7 +234,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   function undo() { if (convPanel && convPanel.isOpen) convPanel.close(); if (history.canUndo) { touched = true; applySnapshot(history.undo(snapshotOf(state.doc))); } }
   function redo() { if (convPanel && convPanel.isOpen) convPanel.close(); if (history.canRedo) { touched = true; applySnapshot(history.redo(snapshotOf(state.doc))); } }
 
-  // ── tools column ────────────────────────────────────────────────
+  // tools column
   const toolDefs = [
     { id: 'pencil', icon: 'pencil', label: 'pencil', key: 'B' },
     { id: 'eraser', icon: 'eraser', label: 'eraser', key: 'E' },
@@ -269,7 +269,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     syncControls(); renderCanvas(); scheduleSave();
   }
 
-  // ── rendering ───────────────────────────────────────────────────
+  // rendering
   function syncControls() {
     for (const t of TOOLS) toolBtns[t].setAttribute('aria-pressed', String(state.tool === t));
     toolBtns.filled.setAttribute('aria-pressed', String(state.filled));
@@ -477,7 +477,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     syncControls(); renderStrip(); renderColors(); renderSizes(); renderCanvas(); restartPlay();
   }
 
-  // ── zoom to fit ─────────────────────────────────────────────────
+  // zoom to fit
   function fitZoom() {
     const aw = el.stage.clientWidth - 16, ah = el.stage.clientHeight - 16;
     if (aw <= 0 || ah <= 0) return;
@@ -487,7 +487,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   let ro = null;
   if (window.ResizeObserver) { ro = new ResizeObserver(() => fitZoom()); ro.observe(el.stage); }
 
-  // ── play preview ────────────────────────────────────────────────
+  // play preview
   function drawPlay() {
     const { doc } = state;
     const i = state.playing ? playIdx % doc.frames.length : state.frameIdx;
@@ -527,7 +527,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   // keep the preview animating while the current frame is edited
   const playRefreshTimer = setInterval(() => { if (state.playing) drawPlay(); }, 400);
 
-  // ── drawing on the canvas ───────────────────────────────────────
+  // drawing on the canvas
   function cellAt(e) {
     const r = el.canvas.getBoundingClientRect();
     const { w, h: ht } = state.doc;
@@ -596,7 +596,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   el.canvas.addEventListener('pointercancel', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
   el.canvas.addEventListener('lostpointercapture', e => { if (stroke && e.pointerId === stroke.id) endStroke(); });
 
-  // ── right column actions ────────────────────────────────────────
+  // right column actions
   el.colorin.addEventListener('input', () => {
     if (!colorEditSnap) { snapshot(); colorEditSnap = true; }
     state.doc.palette[state.colorIdx] = el.colorin.value.toLowerCase();
@@ -713,7 +713,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   });
   el.no.addEventListener('click', () => { pendingSize = 0; renderConfirm(); });
 
-  // ── menus: load palette, export ─────────────────────────────────
+  // menus: load palette, export
   function closeMenus() {
     menu = null;
     el.pallist.hidden = true; el.exportmenu.hidden = true; el.importmenu.hidden = true;
@@ -818,7 +818,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   }
 
 
-  // ── import: image, code, share link ─────────────────────────────
+  // import: image, code, share link
   const fileIn = h('input', { type: 'file', accept: 'image/*', hidden: true, 'aria-hidden': 'true', tabindex: '-1' });
   root.appendChild(fileIn);
 
@@ -1068,7 +1068,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
     importImageFile(f);
   };
 
-  // ── keyboard / outside clicks ───────────────────────────────────
+  // keyboard / outside clicks
   function onKey(e) {
     const t = e.target;
     const inField = t && t.closest && t.closest('input, textarea, select, [contenteditable]');
@@ -1132,7 +1132,7 @@ export function mountPixelTool(container, { mode = 'window' } = {}) {
   const onHide = () => { saveNow(); };
   window.addEventListener('pagehide', onHide);
 
-  // ── start ───────────────────────────────────────────────────────
+  // start
   refreshAll();
   fitZoom();
   loadInitial().then(() => { if (!destroyed) { fitZoom(); saveNow(); } });

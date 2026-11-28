@@ -2,13 +2,13 @@ import { getNode, getCwd } from '../terminal.fs.js';
 import { formatLogEntry, resolveFile, fetchLogEntries, readProjectLog } from './_utils.js';
 
 export default {
-  name:        'cat',
+  name: 'cat',
   description: 'read a file',
-  usage:       'cat <file> [| grep <type>]',
+  usage: 'cat <file> [| grep <type>]',
   handler: async (args) => {
     const [fileArg, ...rest] = args.split('|').map(s => s.trim());
     const grepMatch = rest[0]?.match(/^grep\s+(\S+)$/);
-    const filter    = grepMatch?.[1] ?? null;
+    const filter = grepMatch?.[1] ?? null;
 
     // apps are readable but not log files; check before resolveFile rejects them
     const appNode = fileArg ? getNode([...getCwd(), fileArg]) : null;

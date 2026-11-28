@@ -8,7 +8,7 @@ function list(rows) {
 }
 
 export default {
-  name:        'scores',
+  name: 'scores',
   description: 'list arcade top 20 · scores rm <id> deletes one',
   // returns a promise: the terminal shows "scanning..." and prints the resolved string
   handler: async (args) => {

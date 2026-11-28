@@ -1,13 +1,13 @@
 export default {
-  name:        'click',
+  name: 'click',
   description: 'Clicking on stray makes them upset.',
-  trigger:     { on: 'canvas', event: 'click' },
-  eyes:        'angry',
-  mouth:       'tense',
-  revert:      1500,
+  trigger: { on: 'canvas', event: 'click' },
+  eyes: 'angry',
+  mouth: 'tense',
+  revert: 1500,
 
   handler({ forceShow, setDefault, pauseDefault, resetIdleTimers }) {
-    let frustrationClicks      = 0;
+    let frustrationClicks = 0;
     let frustrationResetTimeout;
 
     return () => {

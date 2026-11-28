@@ -1,9 +1,9 @@
 export default {
-  name:        'keydown',
+  name: 'keydown',
   description: 'Keypress in terminal - normal/flat while typing, resets idle timers',
-  trigger:     { on: 'document', event: 'avatar:keydown' },
-  eyes:        'normal',
-  mouth:       'flat',
+  trigger: { on: 'document', event: 'avatar:keydown' },
+  eyes: 'normal',
+  mouth: 'flat',
 
   handler({ show, setDefault, pauseDefault, resetIdleTimers, IS_DEEP }) {
     let typingTimer;

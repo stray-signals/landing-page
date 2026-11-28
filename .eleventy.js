@@ -43,10 +43,10 @@ module.exports = function(eleventyConfig) {
   return {
     templateFormats: ["njk"],   // only .njk files are treated as templates
     dir: {
-      input:    ".",
-      output:   "_site",
+      input: ".",
+      output: "_site",
       includes: "_includes",
-      data:     "_data",
+      data: "_data",
     },
   };
 };

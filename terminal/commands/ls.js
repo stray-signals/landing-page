@@ -3,7 +3,7 @@ import { listCwd, getCwdString } from '../terminal.fs.js';
 const COL_WIDTH = 24; // name column width
 
 export default {
-  name:        'ls',
+  name: 'ls',
   description: 'list current directory',
   handler: () => {
     const entries = Object.entries(listCwd());

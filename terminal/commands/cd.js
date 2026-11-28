@@ -1,9 +1,9 @@
 import { getCwd, setCwd } from '../terminal.fs.js';
 
 export default {
-  name:        'cd',
+  name: 'cd',
   description: 'change directory',
-  usage:       'cd <dir> | cd ..',
+  usage: 'cd <dir> | cd ..',
   handler: (args) => {
     const target = args.trim();
     if (!target) return { action: 'cd', path: [] }; // cd with no args → root

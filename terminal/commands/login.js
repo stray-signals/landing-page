@@ -2,11 +2,11 @@ import { showModal, closeModal } from '../modal.js';
 import { checkCredentials }      from '../admin/auth.js';
 
 export default {
-  name:        'login',
+  name: 'login',
   description: 'access terminal configurations',
   handler: () => {
     showModal({
-      title:  'identify yourself',
+      title: 'identify yourself',
       fields: [
         { name: 'user', label: 'username', type: 'text' },
         { name: 'pass', label: 'password', type: 'password' },

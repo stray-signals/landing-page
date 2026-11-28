@@ -1,8 +1,7 @@
-// ── Admin credentials ──────────────────────────────────────────────
+// admin credentials
 // Update these before deploying.
 const ADMIN_USER = 'ROOT';
 const ADMIN_PASS = 'oldgrowth';
-// ──────────────────────────────────────────────────────────────────
 
 let _pat = null;
 

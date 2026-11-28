@@ -11,7 +11,7 @@ function getCtx() {
   return ctx;
 }
 
-// ─── Gaze state ───────────────────────────────────────────────────────────────
+// gaze state
 
 let gaze = { yOffset: 0, flipped: false };
 let currentEyeID   = null;

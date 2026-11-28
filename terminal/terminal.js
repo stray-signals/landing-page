@@ -12,7 +12,7 @@ import { openTransmitWindow }   from '../scripts/transmit-window.js';
 import { openApp }              from '../scripts/app-window.js';
 import { loadTransmissions }    from '../tools/transmissions/transmissions.tool.js';
 
-const timeBlock   = TIME_BLOCKS[getTimeBlock()];
+const timeBlock = TIME_BLOCKS[getTimeBlock()];
 const BASE_PROMPT = timeBlock.prompt;
 
 let isAdmin = false;
@@ -26,7 +26,7 @@ function getRegistry() {
   return isAdmin ? ADMIN_REGISTRY : REGISTRY;
 }
 
-// ── Admin mode ─────────────────────────────────────────────────────
+// admin mode
 const dashboard = document.querySelector('.dashboard');
 
 function activateAdmin() {
@@ -50,14 +50,14 @@ document.addEventListener('terminal:adminlogin', () => {
   editableSpan.focus();
 });
 
-// ── Command dispatch ───────────────────────────────────────────────
+// command dispatch
 async function processCommand(input) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
   const firstSpace = trimmed.indexOf(' ');
-  const name     = (firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace)).toLowerCase();
-  const rawArgs  = firstSpace === -1 ? '' : trimmed.slice(firstSpace + 1).trim();
+  const name = (firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace)).toLowerCase();
+  const rawArgs = firstSpace === -1 ? '' : trimmed.slice(firstSpace + 1).trim();
   // preserve case for "run ... | <password>" so a real password isn't mangled
   const args = (name === 'run' && rawArgs.includes('|')) ? rawArgs : rawArgs.toLowerCase();
 
@@ -113,7 +113,7 @@ function dispatchResponding(text) {
   document.dispatchEvent(new CustomEvent('avatar:responding', { detail: { words } }));
 }
 
-// ── Input handling ─────────────────────────────────────────────────
+// input handling
 editableSpan.addEventListener('keydown', async (e) => {
   resetIdleTimer();
 
@@ -140,12 +140,12 @@ editableSpan.addEventListener('focus', () => { resetIdleTimer(); placeCaretAtEnd
 editableSpan.addEventListener('input', resetIdleTimer);
 document.body.addEventListener('click', resetIdleTimer);
 
-// ── Avatar events ──────────────────────────────────────────────────
+// avatar events
 document.addEventListener('avatar:overtapped', () => {
   addMessage('stray', 'hey. stop tapping my screen.');
 });
 
-// ── Init ───────────────────────────────────────────────────────────
+// init
 promptEl.textContent = buildPrompt();
 
 timeBlock.greeting.forEach((line, i) => {

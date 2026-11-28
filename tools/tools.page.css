@@ -1,12 +1,12 @@
 /* Shared styles for standalone tool pages. Does NOT load main.css (it locks the viewport). */
 :root {
-  --color-primary:    #b8ffa0;
+  --color-primary: #b8ffa0;
   --color-primary-dim:#b8e4a0;
-  --color-bg:         #0c100c;
-  --color-border:     #2f4f2f;
-  --color-accent:     #6cb03e;
-  --color-accent-hi:  #8fdf5a;
-  --color-text-blue:  #a0c0e0;
+  --color-bg: #0c100c;
+  --color-border: #2f4f2f;
+  --color-accent: #6cb03e;
+  --color-accent-hi: #8fdf5a;
+  --color-text-blue: #a0c0e0;
 }
 
 @view-transition { navigation: auto; }

@@ -1,9 +1,9 @@
 export default {
-  name:        'submit',
+  name: 'submit',
   description: 'Stray responds - flickers talking/talkingTwo for a duration based on response word count, then settles to flat',
-  trigger:     { on: 'document', event: 'avatar:responding' },
-  eyes:        'normal',
-  mouth:       'talking',
+  trigger: { on: 'document', event: 'avatar:responding' },
+  eyes: 'normal',
+  mouth: 'talking',
 
   handler({ show, setDefault, pauseDefault, resetIdleTimers, IS_DEEP }) {
     return (e) => {

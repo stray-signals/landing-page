@@ -2,7 +2,7 @@ import { listTracks } from '../scripts/player.js';
 import { PROJECTS }  from './projects.data.js';
 import { APPS }      from '../scripts/apps.js';
 
-// ── Virtual filesystem ─────────────────────────────────────────────
+// virtual filesystem
 // Each node: { type, description?, locked?, children?, listFn? }
 // locked    → renders as [signal lost], cd is blocked
 // listFn    → called at ls time to produce dynamic child list
@@ -20,27 +20,27 @@ const filesystem = {
   type: 'dir',
   children: {
     logs: {
-      type:        'dir',
+      type: 'dir',
       description: 'field notes',
       children: {
         'transmissions.log': {
-          type:        'file',
-          kind:        'log',
+          type: 'file',
+          kind: 'log',
           description: "stray's drift log",
-          src:         'root/transmissions/log.json',
+          src: 'root/transmissions/log.json',
         },
       },
     },
     media: {
-      type:        'dir',
+      type: 'dir',
       description: 'audio transmissions',
       listFn: () => {
         return Object.fromEntries(
           listTracks().map(t => [t.label, {
-            type:        'file',
-            kind:        'audio',
+            type: 'file',
+            kind: 'audio',
             description: t.description ?? null,
-            id:          t.id,
+            id: t.id,
           }])
         );
       },
@@ -55,10 +55,10 @@ const filesystem = {
             type: 'dir',
             children: {
               [`${p.id}.log`]: {
-                type:        'file',
-                kind:        'project-log',
+                type: 'file',
+                kind: 'project-log',
                 description: `stray's notes on ${p.id}`,
-                content:     p.log,
+                content: p.log,
               },
             },
           },
@@ -66,21 +66,21 @@ const filesystem = {
       ),
     },
     tools: {
-      type:        'dir',
+      type: 'dir',
       description: 'things you can use',
       children: appsIn('tools'),
     },
     art: {
-      type:        'dir',
+      type: 'dir',
       description: 'things to look at',
       children: appsIn('art'),
     },
-    models:   { type: 'dir', locked: true },
-    portals:  { type: 'dir', locked: true },
+    models: { type: 'dir', locked: true },
+    portals: { type: 'dir', locked: true },
   },
 };
 
-// ── CWD state ──────────────────────────────────────────────────────
+// cwd state
 let cwd = []; // [] = root, ['logs'] = /logs, etc.
 
 export function getCwd()       { return [...cwd]; }

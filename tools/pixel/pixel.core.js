@@ -15,7 +15,7 @@ export function createDoc(size = 32, palette = DEFAULT_PALETTE) {
   return { w: s, h: s, palette: palette.slice(), frames: [new Uint16Array(s * s)] };
 }
 
-// ── drawing ──────────────────────────────────────────────────────
+// drawing
 export function setPixel(frame, w, h, x, y, value, { mirror = false } = {}) {
   if (x >= 0 && y >= 0 && x < w && y < h) frame[y * w + x] = value;
   if (mirror) {
@@ -69,7 +69,7 @@ export function floodFill(frame, w, h, x, y, value, { mirror = false } = {}) {
   if (mirror) fillFrom(frame, w, h, w - 1 - x, y, value);
 }
 
-// ── history ──────────────────────────────────────────────────────
+// history
 export function snapshotOf(doc) {
   return { w: doc.w, h: doc.h, palette: doc.palette.slice(), frames: doc.frames.map(f => f.slice()) };
 }
@@ -97,7 +97,7 @@ export function createHistory(limit = 100) {
   };
 }
 
-// ── frames ───────────────────────────────────────────────────────
+// frames
 export function addFrame(doc, afterIdx) {
   if (doc.frames.length >= MAX_FRAMES) return -1;
   const i = Math.max(-1, Math.min(afterIdx, doc.frames.length - 1)) + 1;
@@ -137,7 +137,7 @@ export function resizeDoc(doc, size) {
   doc.frames = nf;
 }
 
-// ── rendering ────────────────────────────────────────────────────
+// rendering
 export function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -170,7 +170,7 @@ export function toSpritesheetRGBA(doc) {
   return { data, width, height };
 }
 
-// ── share ────────────────────────────────────────────────────────
+// share
 const VERSION = 2;
 
 async function pipe(bytes, stream) {
@@ -266,7 +266,7 @@ export async function decodeDoc(str) {
   } catch (e) { return null; }
 }
 
-// ── code export ──────────────────────────────────────────────────
+// code export
 export function toCode(doc, idx) {
   const f = doc.frames[idx], { w, h } = doc;
   const used = new Set();
@@ -297,7 +297,7 @@ export function toCode(doc, idx) {
   return `// legend: ${legend.join(', ')}\n// (uppercase = 50%)\n` + quote(rows);
 }
 
-// ── gif ──────────────────────────────────────────────────────────
+// gif
 export function toGif(doc, { scale = doc.w >= 128 ? 4 : 8, fps = 6 } = {}) {
   const np = doc.palette.length, bg = hexToRgb(BG_HEX);
   const colors = doc.palette.map(hexToRgb);

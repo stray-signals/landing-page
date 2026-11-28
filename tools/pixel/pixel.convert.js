@@ -1,7 +1,7 @@
 // Pixel editor image conversion: downscale, adjust, dither, tone bands, code parsing.
 // Pure functions, no DOM, no imports.
 
-// ── pattern sets (4x4 tiles, 1 = lighter color) ──────────────────
+// pattern sets (4x4 tiles, 1 = lighter color)
 function bayer(n) {
   let m = [[0]];
   while (m.length < n) {
@@ -58,7 +58,7 @@ const clamp = v => (v < 0 ? 0 : v > 255 ? 255 : v);
 const lum = (r, g, b) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 const hexRgb = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 
-// ── source pixels ────────────────────────────────────────────────
+// source pixels
 // Center-crop to a square, then area-average to N x N. Color is weighted by alpha
 // so transparent pixels do not darken the result.
 export function downscale(rgba, sw, sh, N, { fit = 'crop' } = {}) {
@@ -101,7 +101,7 @@ export function downscale(rgba, sw, sh, N, { fit = 'crop' } = {}) {
   return { rgb, alpha };
 }
 
-// ── gif frames ───────────────────────────────────────────────────
+// gif frames
 // Composites a GifReader's frames onto full-canvas RGBA frames, following disposal rules.
 export function gifFrames(reader, max) {
   const w = reader.width, h = reader.height, n = Math.min(reader.numFrames(), max);
@@ -124,7 +124,7 @@ export function gifFrames(reader, max) {
   return { w, h, frames, delays };
 }
 
-// ── pixel art detection ──────────────────────────────────────────
+// pixel art detection
 const gcd = (a, b) => { while (b) { [a, b] = [b, a % b]; } return a; };
 const keyAt = (d, i) => (d[i + 3] === 0 ? 0 : ((d[i] << 24) | (d[i + 1] << 16) | (d[i + 2] << 8) | d[i + 3]) >>> 0 || 1);
 
@@ -328,7 +328,7 @@ export function adjust(rgb, bright, contrast) {
   return out;
 }
 
-// ── target colors ────────────────────────────────────────────────
+// target colors
 export function targetColors(paletteHex, depth) {
   const seen = new Set(), all = [];
   paletteHex.forEach((hex, idx) => {
@@ -359,7 +359,7 @@ export function targetColors(paletteHex, depth) {
   return picked.sort((a, b) => a.l - b.l).map(c => ({ idx: c.idx, rgb: c.rgb }));
 }
 
-// ── convert ──────────────────────────────────────────────────────
+// convert
 function nearest(pal, r, g, b) {
   let best = 0, bd = Infinity;
   for (let j = 0; j < pal.length; j++) {
@@ -574,7 +574,7 @@ export function convert(rgb, alpha, N, targets, opts = {}) {
   return res;
 }
 
-// ── code import ──────────────────────────────────────────────────
+// code import
 // Reads toCode() output. Returns { w, h, rows, legend } or null.
 // legend is a Map of lowercase char -> '#rrggbb' (null for the @ % . format).
 // With a legend, an uppercase row letter means that color at 50%.

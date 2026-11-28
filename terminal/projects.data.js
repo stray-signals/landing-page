@@ -1,12 +1,12 @@
-// ── Project data ───────────────────────────────────────────────────
+// project data
 // Edit log[] to change what "cat projects/<id>/<id>.log" displays
 // in the terminal. url is where "run <id>" redirects.
 
 export const PROJECTS = {
   pigeonhole: {
-    id:    'pigeonhole',
+    id: 'pigeonhole',
     label: 'pigeonhole',
-    url:   '/projects/pigeonhole/',
+    url: '/projects/pigeonhole/',
     log: [
       '[project] pigeonhole',
       'built a thing. it watches faces and puts them in the right box.',
@@ -20,9 +20,9 @@ export const PROJECTS = {
   },
 
   roam: {
-    id:    'roam',
+    id: 'roam',
     label: 'roam',
-    url:   '/projects/roam/',
+    url: '/projects/roam/',
     log: [
       '[project] roam',
       'built a camera. for a small wanderer i know.',

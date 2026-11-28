@@ -2,9 +2,9 @@ import { getSavedPalettes } from '../../tools/palette/palette.theme.js';
 import { MODES, generatePalette, normalizeHex } from '../../tools/palette/palette.color.js';
 
 export default {
-  name:        'palette',
+  name: 'palette',
   description: 'make a color palette  palette [#hex] [mode] | saved | apply <n> | reset',
-  usage:       'palette [#hex] [mode] | palette saved | apply <n> | reset',
+  usage: 'palette [#hex] [mode] | palette saved | apply <n> | reset',
   handler: (args) => {
     const parts = args.trim().split(/\s+/).filter(Boolean);
     let seedHex;

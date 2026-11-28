@@ -3,13 +3,13 @@
 // and updates signal_sent: true on success.
 // Run by GitHub Actions after each deploy.
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 
-const LOG_PATH  = path.join(__dirname, '..', 'root', 'transmissions', 'log.json');
+const LOG_PATH = path.join(__dirname, '..', 'root', 'transmissions', 'log.json');
 const SITE_BASE = 'https://straysignals.dev';
 
-// ── Endpoint discovery ─────────────────────────────────────────────
+// endpoint discovery
 // Checks Link header first, then parses HTML for <link rel="webmention">
 async function findEndpoint(targetUrl) {
   const res = await fetch(targetUrl, { redirect: 'follow' });
@@ -28,18 +28,18 @@ async function findEndpoint(targetUrl) {
   return null;
 }
 
-// ── Send ───────────────────────────────────────────────────────────
+// send
 async function sendWebmention(source, target, endpoint) {
   const res = await fetch(endpoint, {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({ source, target }).toString(),
+    body: new URLSearchParams({ source, target }).toString(),
   });
   // 200, 201, or 202 all mean accepted
   return res.status === 200 || res.status === 201 || res.status === 202;
 }
 
-// ── Main ───────────────────────────────────────────────────────────
+// main
 async function main() {
   const log = JSON.parse(fs.readFileSync(LOG_PATH, 'utf-8'));
   let changed = false;
@@ -51,8 +51,8 @@ async function main() {
   }
 
   for (const entry of pending) {
-    const source   = `${SITE_BASE}/transmissions/${entry.id}/`;
-    const target   = entry.url;
+    const source = `${SITE_BASE}/transmissions/${entry.id}/`;
+    const target = entry.url;
 
     console.log(`\n── ${entry.id}`);
     console.log(`   source: ${source}`);

@@ -31,7 +31,7 @@ export const ENDING = {
 };
 ENDING.resultsAt = ENDING.typeFrom + ENDING_LINE.length * ENDING.typeMs / 1000 + 2;
 
-// ── helpers ─────────────────────────────────────────────────────────
+// helpers
 
 export function wrap(a) { a %= TAU; return a < 0 ? a + TAU : a; }
 export function angDiff(a, b) {
@@ -68,7 +68,7 @@ export function formatEnergy(logE) {
   return mantissa + '×10' + exp.split('').map(c => SUP[+c]).join('') + ' eV';
 }
 
-// ── world ───────────────────────────────────────────────────────────
+// world
 
 export function createWorld({ attract = false, seed, startWave = 1 } = {}) {
   const w = {
@@ -153,7 +153,7 @@ function spawnPickup(w, a, d = 0.12) {
   emit(w, 'appear', w.pickups[w.pickups.length - 1].a, d);
 }
 
-// ── damage ──────────────────────────────────────────────────────────
+// damage
 
 function hitPlayer(w) {
   const s = w.stray;
@@ -190,7 +190,7 @@ function collect(w, p) {
   spark(w, p.a, 1, 14, 0.5);
 }
 
-// ── energy ──────────────────────────────────────────────────────────
+// energy
 
 export function waveFrac(w) {
   const v = w.wv;
@@ -215,7 +215,7 @@ export function energyLog(w) {
   return Math.min(E_END, E_START + (E_END - E_START) * prog + w.bump);
 }
 
-// ── step ────────────────────────────────────────────────────────────
+// step
 
 export function stepWorld(w, dt, input = {}) {
   w.t += dt;
@@ -543,7 +543,7 @@ function stepEnding(w, dt) {
   if (e.t >= ENDING.resultsAt) { w.phase = 'cleared'; }
 }
 
-// ── attract-mode AI ─────────────────────────────────────────────────
+// attract-mode ai
 
 export function attractInput(w, dt) {
   const ai = w.ai || (w.ai = { cd: 0, target: null });

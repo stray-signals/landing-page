@@ -30,7 +30,7 @@ function fontSize(v) { return clamp(Math.min(v.W, v.H) / 28, 10, 17); }
 
 function P(v, a, d) { const [x, y] = polar(a, d * v.R); return [v.cx + x, v.cy + y]; }
 
-// ── the ending: Earth, the particle shower, then a CRT ──────────────
+// the ending: earth, the particle shower, then a crt
 
 // coarse land outlines (lon, lat); only needs to read as Earth at dot resolution
 const LAND = [
@@ -188,7 +188,7 @@ function drawCRT(ctx, v, C, w, fx) {
   ctx.globalAlpha = 1;
 }
 
-// ── pieces ──────────────────────────────────────────────────────────
+// pieces
 
 function drawStars(ctx, v, C, stars, fx) {
   const reach = Math.max(v.W, v.H) * 0.7;
@@ -570,7 +570,7 @@ function drawOverlays(ctx, v, C, w, fx) {
   }
 }
 
-// ── frame ───────────────────────────────────────────────────────────
+// frame
 // fx: { C, stars, trail, time, warp, starAlpha, energy, hi, soundOn, attract, paused, endingLine }
 
 export function drawFrame(ctx, v, w, fx) {

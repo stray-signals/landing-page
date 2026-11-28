@@ -1,11 +1,11 @@
-// ── CRT Window System ─────────────────────────────────────────────
-// CRTWindow   — drag, resize, minimize / maximize / close
-// WindowManager — z-index tracking + taskbar
+// crt window system
+// CRTWindow: drag, resize, minimize / maximize / close
+// WindowManager: z-index tracking + taskbar
 
 const TASKBAR = document.getElementById('taskbar');
 let zTop = 10;
 
-// ── WindowManager ─────────────────────────────────────────────────
+// window manager
 
 export const WindowManager = {
   _windows: new Map(),
@@ -21,7 +21,7 @@ export const WindowManager = {
 
   addToTaskbar(win) {
     const btn = document.createElement('button');
-    btn.className   = 'taskbar-item';
+    btn.className = 'taskbar-item';
     btn.textContent = win.title;
     btn.addEventListener('click', () => win.restore());
     TASKBAR.appendChild(btn);
@@ -34,19 +34,19 @@ export const WindowManager = {
   },
 };
 
-// ── CRTWindow ──────────────────────────────────────────────────────
+// crt window
 // CRTWindow.onPageExpand: hook set by app-window.js for windows with data-page
 
 export class CRTWindow {
   constructor(id) {
-    this.el    = document.getElementById(id);
-    this.id    = id;
+    this.el = document.getElementById(id);
+    this.id = id;
     this.title = this.el.dataset.title ?? id;
     this.state = 'normal'; // 'normal' | 'minimized' | 'maximized' | 'closed'
 
     this._taskbarBtn = null;
-    this._savedRect  = null;
-    this._titlebar   = this.el.querySelector('.window-titlebar');
+    this._savedRect = null;
+    this._titlebar = this.el.querySelector('.window-titlebar');
 
     this._bindDrag();
     this._bindResize();
@@ -57,7 +57,7 @@ export class CRTWindow {
     WindowManager.register(this);
   }
 
-  // ── State API ────────────────────────────────────────────────────
+  // state api
 
   minimize() {
     if (this.state === 'minimized') return;
@@ -86,7 +86,7 @@ export class CRTWindow {
   restore() {
     const wasMin = this.state === 'minimized';
     const wasMax = this.state === 'maximized';
-    this.state   = 'normal';
+    this.state = 'normal';
     this.el.classList.remove('is-minimized', 'is-maximized');
 
     if (wasMin) WindowManager.removeFromTaskbar(this);
@@ -118,7 +118,7 @@ export class CRTWindow {
     document.dispatchEvent(new CustomEvent(name, { detail: { id: this.id } }));
   }
 
-  // ── Drag ─────────────────────────────────────────────────────────
+  // drag
 
   _bindDrag() {
     const startDrag = (startX, startY) => {
@@ -130,7 +130,7 @@ export class CRTWindow {
         const x = Math.max(-this.el.offsetWidth + 80,  Math.min(window.innerWidth  - 80, cx - ox));
         const y = Math.max(0, Math.min(window.innerHeight - 40, cy - oy));
         this.el.style.left = x + 'px';
-        this.el.style.top  = y + 'px';
+        this.el.style.top = y + 'px';
       };
     };
 
@@ -141,7 +141,7 @@ export class CRTWindow {
       const move = startDrag(e.clientX, e.clientY);
       if (!move) return;
       const onMove = (e) => move(e.clientX, e.clientY);
-      const onUp   = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+      const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
@@ -149,17 +149,17 @@ export class CRTWindow {
     // Touch
     this._titlebar.addEventListener('touchstart', (e) => {
       if (e.target.closest('.win-btn')) return;
-      const t    = e.touches[0];
+      const t = e.touches[0];
       const move = startDrag(t.clientX, t.clientY);
       if (!move) return;
       const onMove = (e) => { const t = e.touches[0]; move(t.clientX, t.clientY); };
-      const onEnd  = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onEnd); };
+      const onEnd = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onEnd); };
       document.addEventListener('touchmove', onMove, { passive: false });
       document.addEventListener('touchend', onEnd);
     }, { passive: true });
   }
 
-  // ── Resize ───────────────────────────────────────────────────────
+  // resize
 
   _bindResize() {
     this.el.querySelectorAll('.rz').forEach(handle => {
@@ -170,8 +170,8 @@ export class CRTWindow {
         WindowManager.focus(this);
 
         const dir = handle.dataset.dir;
-        const sx  = e.clientX, sy = e.clientY;
-        const sr  = this.el.getBoundingClientRect();
+        const sx = e.clientX, sy = e.clientY;
+        const sr = this.el.getBoundingClientRect();
 
         const onMove = (e) => {
           const dx = e.clientX - sx;
@@ -199,7 +199,7 @@ export class CRTWindow {
     });
   }
 
-  // ── Buttons ──────────────────────────────────────────────────────
+  // buttons
 
   _bindButtons() {
     const stop = (e) => e.stopPropagation();

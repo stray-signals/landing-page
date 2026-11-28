@@ -2,13 +2,13 @@ import { PROJECTS } from '../projects.data.js';
 import { APPS }     from '../../scripts/apps.js';
 
 export default {
-  name:        'run',
+  name: 'run',
   description: 'runs a application',
-  usage:       'run <project>',
+  usage: 'run <project>',
   handler: (args) => {
     const pipeIdx = args.indexOf('|');
-    const target  = (pipeIdx === -1 ? args : args.slice(0, pipeIdx)).trim().toLowerCase();
-    const extra   = pipeIdx === -1 ? null : args.slice(pipeIdx + 1).trim();
+    const target = (pipeIdx === -1 ? args : args.slice(0, pipeIdx)).trim().toLowerCase();
+    const extra = pipeIdx === -1 ? null : args.slice(pipeIdx + 1).trim();
 
     if (target === 'transmit') return { action: 'openTransmit', password: extra };
 

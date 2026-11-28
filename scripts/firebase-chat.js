@@ -1,15 +1,15 @@
-// ── Firebase backend (chat + arcade scores) ─────────────────────────
+// firebase backend (chat + arcade scores)
 // Single point of contact with Firebase. If this is ever swapped for a
 // different backend, this is the only file that needs to change.
 // Handles the transmit chat and the arcade high scores (`${game}_scores`).
 
 const FIREBASE_CONFIG = {
-  apiKey:            'AIzaSyCEayTpMNXkPMF_iP1hsi4dv0dqWckoHY0',
-  authDomain:        'stray-signals.firebaseapp.com',
-  projectId:         'stray-signals',
-  storageBucket:     'stray-signals.firebasestorage.app',
+  apiKey: 'AIzaSyCEayTpMNXkPMF_iP1hsi4dv0dqWckoHY0',
+  authDomain: 'stray-signals.firebaseapp.com',
+  projectId: 'stray-signals',
+  storageBucket: 'stray-signals.firebasestorage.app',
   messagingSenderId: '705508316899',
-  appId:             '1:705508316899:web:fd243b93290662b19b57d6',
+  appId: '1:705508316899:web:fd243b93290662b19b57d6',
 };
 
 const STRAY_EMAIL = 'stray@straysignals.dev';
@@ -33,14 +33,14 @@ async function doInit() {
   ]);
 
   _firestoreApi = firestoreApi;
-  _authApi      = authApi;
+  _authApi = authApi;
 
-  _app  = initializeApp(FIREBASE_CONFIG);
-  _db   = firestoreApi.getFirestore(_app);
+  _app = initializeApp(FIREBASE_CONFIG);
+  _db = firestoreApi.getFirestore(_app);
   _auth = authApi.getAuth(_app);
 }
 
-// ── Anonymous handle ────────────────────────────────────────────────
+// anonymous handle
 
 export function getHandle() {
   let handle = localStorage.getItem('stray_chat_handle');
@@ -52,7 +52,7 @@ export function getHandle() {
   return handle;
 }
 
-// ── Auth ────────────────────────────────────────────────────────────
+// auth
 
 export async function signInStray(password) {
   await ensureInit();
@@ -73,7 +73,7 @@ export function isStrayAuthed() {
   return !!_auth?.currentUser;
 }
 
-// ── Messages ────────────────────────────────────────────────────────
+// messages
 
 export async function subscribeMessages(callback) {
   await ensureInit();
@@ -94,9 +94,9 @@ export async function sendMessage(text) {
   const { collection, addDoc, serverTimestamp } = _firestoreApi;
   const stray = isStrayAuthed();
   await addDoc(collection(_db, 'transmissions'), {
-    text:      text.slice(0, 280),
-    author:    stray ? 'stray' : getHandle(),
-    isStray:   stray,
+    text: text.slice(0, 280),
+    author: stray ? 'stray' : getHandle(),
+    isStray: stray,
     createdAt: serverTimestamp(),
   });
 }
@@ -107,7 +107,7 @@ export async function deleteMessage(id) {
   await deleteDoc(doc(_db, 'transmissions', id));
 }
 
-// ── Arcade scores ───────────────────────────────────────────────────
+// arcade scores
 // Rules (firestore.rules): initials ^[A-Z]{3}$, score int 1..100000, only those keys + createdAt.
 // Every call can throw (offline, SDK blocked, timeout); callers catch and carry on.
 

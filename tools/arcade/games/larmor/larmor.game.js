@@ -36,7 +36,7 @@ export function createGame(canvas, opts = {}) {
 
   function newWorld() { return createWorld({ attract, startWave: attract ? 2 : 1 }); }
 
-  // ── sizing ────────────────────────────────────────────────────────
+  // sizing
   canvas.style.cssText += ';display:block;width:100%;height:100%;touch-action:none;';
   function size() {
     const host = canvas.parentElement || canvas;
@@ -54,7 +54,7 @@ export function createGame(canvas, opts = {}) {
   const ro = new ResizeObserver(size);
   ro.observe(canvas.parentElement || canvas);
 
-  // ── input ─────────────────────────────────────────────────────────
+  // input
   const has = list => list.some(k => keys.has(k));
   function readInput(dt) {
     if (attract) return attractInput(world, dt);
@@ -71,7 +71,7 @@ export function createGame(canvas, opts = {}) {
     return (world.phase === 'over' && world.overT > 1.4) || (world.phase === 'cleared' && world.ending.t > ENDING.resultsAt + 1);
   }
 
-  // ── results: initials entry + shared board ────────────────────────
+  // results: initials entry + shared board
   function startResults() {
     let saved = 'AAA';
     try { saved = cleanInitials(localStorage.getItem(INITIALS_KEY)); } catch (e) { /* ignore */ }
@@ -198,7 +198,7 @@ export function createGame(canvas, opts = {}) {
     window.addEventListener('blur', onBlur);
   }
 
-  // ── simulation ────────────────────────────────────────────────────
+  // simulation
   function step(dt) {
     stepWorld(world, dt, readInput(dt));
 
@@ -269,7 +269,7 @@ export function createGame(canvas, opts = {}) {
     for (let i = 0; i < seconds * 60; i++) step(1 / 60);
   }
 
-  // ── public ────────────────────────────────────────────────────────
+  // public
   function start() {
     if (destroyed || running) return;
     running = true; paused = false;

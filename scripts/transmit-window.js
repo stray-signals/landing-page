@@ -92,9 +92,9 @@ async function init() {
 
   win = new CRTWindow('win-transmit');
 
-  const historyEl  = el.querySelector('#chatHistory');
-  const inputEl    = el.querySelector('#chatInput');
-  const sendBtn    = el.querySelector('#chatSendBtn');
+  const historyEl = el.querySelector('#chatHistory');
+  const inputEl = el.querySelector('#chatInput');
+  const sendBtn = el.querySelector('#chatSendBtn');
   const identityEl = el.querySelector('#chatIdentity');
   const authLinkEl = el.querySelector('#chatAuthLink');
 
@@ -132,7 +132,7 @@ async function init() {
     if (isStrayAuthed()) { signOutStray(); return; }
 
     showModal({
-      title:  'sign in as stray',
+      title: 'sign in as stray',
       fields: [{ name: 'pass', label: 'password', type: 'password' }],
       onSubmit: async (values, setError) => {
         try {

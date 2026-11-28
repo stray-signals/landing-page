@@ -11,13 +11,13 @@ export const ADMIN_REGISTRY = new Map(REGISTRY);
 for (const cmd of adminCommands) ADMIN_REGISTRY.set(cmd.name, cmd);
 
 ADMIN_REGISTRY.set('logout', {
-  name:        'logout',
+  name: 'logout',
   description: 'exit admin mode',
-  handler:     () => ({ action: 'logout' }),
+  handler: () => ({ action: 'logout' }),
 });
 
 ADMIN_REGISTRY.set('help', {
-  name:        'help',
+  name: 'help',
   description: 'list admin commands',
   handler: () => {
     const lines = [''];

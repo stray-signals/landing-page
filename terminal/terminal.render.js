@@ -1,10 +1,10 @@
-// ── DOM references ─────────────────────────────────────────────────
+// dom references
 export const historyDiv    = document.getElementById('commandHistory');
 export const editableSpan  = document.getElementById('editableSpan');
 export const terminalPanel = document.getElementById('terminalPanel');
 export const promptEl      = document.getElementById('inputPrompt');
 
-// ── Message output ─────────────────────────────────────────────────
+// message output
 export function addMessage(sender, text) {
   const entry = document.createElement('div');
   entry.className = `history-entry ${sender === 'visitor' ? 'visitor-msg' : 'stray-msg'}`;
@@ -53,7 +53,7 @@ export function renderSwatches(colors, label) {
   historyDiv.scrollTop = historyDiv.scrollHeight;
 }
 
-// ── Cursor ─────────────────────────────────────────────────────────
+// cursor
 export function placeCaretAtEnd(el) {
   el.focus();
   const range = document.createRange();
@@ -64,7 +64,7 @@ export function placeCaretAtEnd(el) {
   sel.addRange(range);
 }
 
-// ── Layout ─────────────────────────────────────────────────────────
+// layout
 export function syncHeights() {
   const facePanel = document.querySelector('.face-panel');
   if (window.innerWidth > 700 && facePanel) {

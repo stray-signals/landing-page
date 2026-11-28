@@ -1,8 +1,7 @@
-// ── Command registry ───────────────────────────────────────────────
+// command registry
 // To add a new command:
 //   1. Create terminal/commands/yourcommand.js
 //   2. Import it below and add it to the commands array
-// ──────────────────────────────────────────────────────────────────
 
 import whois    from './whois.js';
 import run      from './run.js';
@@ -38,7 +37,7 @@ export const REGISTRY = new Map(commands.map(cmd => [cmd.name, cmd]));
 
 // Help is defined here since it needs access to the full registry
 REGISTRY.set('help', {
-  name:        'help',
+  name: 'help',
   description: 'list available commands',
   handler: () => {
     const lines = [''];

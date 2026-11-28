@@ -1,9 +1,9 @@
 import { play, stop, isPlaying, getNowPlaying, getTrack } from '../../scripts/player.js';
 
 export default {
-  name:        'freq',
+  name: 'freq',
   description: 'play/stop audio transmissions',
-  usage:       'freq [<id>] | freq stop',
+  usage: 'freq [<id>] | freq stop',
   handler: (args) => {
     const target = args.trim();
 

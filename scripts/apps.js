@@ -1,4 +1,4 @@
-// ── App registry ──────────────────────────────────────────────────
+// app registry
 // Apps are windows that also have a full page.
 // folder: which terminal directory lists it (default 'tools').
 

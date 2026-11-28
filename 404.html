@@ -105,7 +105,7 @@
 </div>
 
 <script>
-  // ── Rooms ──────────────────────────────────────────────────────────
+  // rooms
   const ROOMS = {
     static: {
       description: [
@@ -137,10 +137,10 @@
     },
   };
 
-  // ── State ──────────────────────────────────────────────────────────
+  // state
   let current = 'static';
 
-  // ── Output helpers ─────────────────────────────────────────────────
+  // output helpers
   const output = document.getElementById('output');
 
   function print(text, cls = 'stray') {
@@ -159,7 +159,7 @@
     if (exits.length) print(`exits: ${exits.join(', ')}`, 'dim');
   }
 
-  // ── Command parser ─────────────────────────────────────────────────
+  // command parser
   function handle(input) {
     const raw = input.trim().toLowerCase();
     if (!raw) return;
@@ -218,7 +218,7 @@
     print(`"${raw}" - stray isn\'t here to help. try "help".`);
   }
 
-  // ── Input listener ─────────────────────────────────────────────────
+  // input listener
   document.getElementById('cmdInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const val = e.target.value;
@@ -227,7 +227,7 @@
     }
   });
 
-  // ── Boot ───────────────────────────────────────────────────────────
+  // boot
   const boot = [
     '404 - signal not found.',
     'you took a wrong turn somewhere in the static.',

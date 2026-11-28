@@ -1,9 +1,9 @@
 export default {
-  name:        'reopened',
+  name: 'reopened',
   description: 'Avatar window reopened - unamused at having to reappear, reverts after 2s. Bypasses deep mode.',
-  trigger:     { on: 'document', event: 'avatar:reopened' },
-  eyes:        'unamused',
-  mouth:       'flat',
+  trigger: { on: 'document', event: 'avatar:reopened' },
+  eyes: 'unamused',
+  mouth: 'flat',
 
   handler({ forceShow, setDefault, pauseDefault, resetIdleTimers }) {
     return () => {

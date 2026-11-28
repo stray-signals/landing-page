@@ -1,9 +1,9 @@
 import { formatLogEntry, resolveFile, fetchLogEntries, readProjectLog } from './_utils.js';
 
 export default {
-  name:        'tail',
+  name: 'tail',
   description: 'read the latest entry in a file',
-  usage:       'tail <file>',
+  usage: 'tail <file>',
   handler: async (args) => {
     const { node, error } = resolveFile(args.trim());
     if (error) return `tail: ${error}`;

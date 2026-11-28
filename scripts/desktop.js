@@ -3,13 +3,13 @@ import { APPS } from './apps.js';
 import { isPhone } from '/shared/screen.js';
 import { openApp } from './app-window.js';
 
-const avatarWin   = new CRTWindow('win-avatar');
+const avatarWin = new CRTWindow('win-avatar');
 const terminalWin = new CRTWindow('win-terminal');
 
 // Terminal starts on top
 WindowManager.focus(terminalWin);
 
-// ── Avatar window: auto-reopen after 3s with annoyed face ─────────
+// avatar window: auto-reopen after 3s with annoyed face
 document.addEventListener('window:close', ({ detail }) => {
   if (detail.id !== 'win-avatar') return;
   setTimeout(() => {
@@ -18,17 +18,17 @@ document.addEventListener('window:close', ({ detail }) => {
   }, 3000);
 });
 
-// ── Triple-tap Stray: reopen terminal if it was closed ────────────
+// triple-tap stray: reopen terminal if it was closed
 document.addEventListener('avatar:overtapped', () => {
   if (terminalWin.state === 'closed') terminalWin.open();
 });
 
-// ── Admin mode: hide avatar window ────────────────────────────────
+// admin mode: hide avatar window
 document.addEventListener('terminal:adminlogin', () => {
   avatarWin.minimize();
 });
 
-// ── Round trip from an app page: restore theme, reopen the app window ──
+// round trip from an app page: restore theme, reopen the app window
 try {
   const theme = JSON.parse(sessionStorage.getItem('stray_theme') || 'null');
   if (theme && typeof theme === 'object') {

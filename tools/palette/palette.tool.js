@@ -128,7 +128,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
   for (const m of MODES) el.mode.appendChild(h('option', { value: m, text: m }));
   for (const c of CVD_TYPES) el.cvd.appendChild(h('option', { value: c, text: CVD_LABELS[c] }));
 
-  // ── state helpers ───────────────────────────────────────────────
+  // state helpers
   function saveState() {
     try { sessionStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
     if (mode === 'page') {
@@ -144,7 +144,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
     msgTimer = setTimeout(() => { el.msg.classList.remove('on'); }, 2000);
   }
 
-  // ── bars ────────────────────────────────────────────────────────
+  // bars
   function renderBars(restoreLock = -1) {
     el.bars.textContent = '';
     el.bars.style.setProperty('--n', state.colors.length);
@@ -183,7 +183,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
     });
   }
 
-  // ── adjust popover ──────────────────────────────────────────────
+  // adjust popover
   function closePop() {
     if (popIndex < 0) return;
     const i = popIndex;
@@ -275,7 +275,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
     if (focus) sliders.h.focus();
   }
 
-  // ── panels (saved / contrast / export) ──────────────────────────
+  // panels (saved / contrast / export)
   function closePanel() {
     if (!panel) return;
     el.drawers[panel].hidden = true;
@@ -424,7 +424,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
     }
   }
 
-  // ── actions ─────────────────────────────────────────────────────
+  // actions
   function syncControls() {
     el.mode.value = state.mode;
     el.cvd.value = state.cvd;
@@ -514,7 +514,7 @@ export function mountPaletteTool(container, { mode = 'window' } = {}) {
 
   for (const name of Object.keys(el.toggles)) el.toggles[name].addEventListener('click', () => togglePanel(name));
 
-  // ── keyboard / outside clicks ───────────────────────────────────
+  // keyboard / outside clicks
   function onKey(e) {
     if (e.key === 'Escape') {
       if (popIndex >= 0) {

@@ -3,11 +3,11 @@
 
 const TRACKS = [
   {
-    id:          'field_log_0001',
-    label:       'field_log_0001.mp3',
+    id: 'field_log_0001',
+    label: 'field_log_0001.mp3',
     description: 'rain on canvas',
-    src:         'root/media/field_log_0001.mp3',
-    loop:        true,
+    src: 'root/media/field_log_0001.mp3',
+    loop: true,
   },
 ];
 

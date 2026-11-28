@@ -5,12 +5,12 @@
   <title>straysignals :: expression spritesheet</title>
   <style>
     :root {
-      --color-primary:     #b8ffa0;
+      --color-primary: #b8ffa0;
       --color-primary-dim: #b8e4a0;
-      --color-bg:          #0c100c;
-      --color-border:      #2f4f2f;
-      --color-accent:      #6cb03e;
-      --color-accent-hi:   #8fdf5a;
+      --color-bg: #0c100c;
+      --color-border: #2f4f2f;
+      --color-accent: #6cb03e;
+      --color-accent-hi: #8fdf5a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -76,16 +76,16 @@
 
     function makeCanvas() {
       const c = document.createElement('canvas');
-      c.width  = 256;
+      c.width = 256;
       c.height = 256;
       return c;
     }
 
     function makeCell(label) {
-      const cell  = document.createElement('div');
+      const cell = document.createElement('div');
       cell.className = 'cell';
       const canvas = makeCanvas();
-      const lbl   = document.createElement('div');
+      const lbl = document.createElement('div');
       lbl.className = 'label';
       lbl.textContent = label;
       cell.appendChild(canvas);
@@ -103,7 +103,7 @@
       return grid;
     }
 
-    // ── Full faces ──────────────────────────────────────────────────────────
+    // full faces
     const faceGrid = section('full faces');
     for (const id of FACE_IDS) {
       const { cell, ctx } = makeCell(id);
@@ -111,7 +111,7 @@
       faceGrid.appendChild(cell);
     }
 
-    // ── Eye × Mouth combinations ────────────────────────────────────────────
+    // eye × mouth combinations
     for (const eyeID of EYE_IDS) {
       const mouthGrid = section(`eyes: ${eyeID}`);
       for (const mouthID of MOUTH_IDS) {

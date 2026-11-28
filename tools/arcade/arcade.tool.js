@@ -63,7 +63,7 @@ export function mountArcade(container, { mode = 'window' } = {}) {
 
   function focusRoot() { try { root.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
 
-  // ── game lifecycle ────────────────────────────────────────────────
+  // game lifecycle
   function destroyGame() {
     gen++;
     if (game) { try { game.destroy(); } catch (e) { /* ignore */ } game = null; }
@@ -105,7 +105,7 @@ export function mountArcade(container, { mode = 'window' } = {}) {
     });
   }
 
-  // ── picker ────────────────────────────────────────────────────────
+  // picker
   function showPicker() {
     destroyGame();
     view = 'picker';
@@ -141,7 +141,7 @@ export function mountArcade(container, { mode = 'window' } = {}) {
     showPicker();
   }
 
-  // ── input ─────────────────────────────────────────────────────────
+  // input
   function onKey(e) {
     if (view !== 'picker' || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
@@ -162,7 +162,7 @@ export function mountArcade(container, { mode = 'window' } = {}) {
   const onPointerDown = () => focusRoot();
   root.addEventListener('pointerdown', onPointerDown);
 
-  // ── lifecycle hooks ───────────────────────────────────────────────
+  // lifecycle hooks
   function refreshColors() {
     colors = readColors();
     if (game) game.setColors(colors);

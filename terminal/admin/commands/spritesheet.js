@@ -1,7 +1,7 @@
 import { currentHex } from './theme.js';
 
 export default {
-  name:        'spritesheet',
+  name: 'spritesheet',
   description: 'open expression spritesheet',
   handler: () => {
     const color = encodeURIComponent(currentHex);

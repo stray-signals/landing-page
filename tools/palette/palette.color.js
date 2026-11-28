@@ -10,7 +10,7 @@ export const CVD_TYPES = ['none', 'protanopia', 'deuteranopia', 'tritanopia', 'a
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
-// ── Contrast ──────────────────────────────────────────────────────
+// contrast
 const toLinear = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
 const fromLinear = c => { c = clamp(c, 0, 1); return 255 * (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055); };
 
@@ -29,7 +29,7 @@ export function inkFor(hex) {
   return contrast(hex, INK_DARK) >= contrast(hex, INK_LIGHT) ? INK_DARK : INK_LIGHT;
 }
 
-// ── Generation ────────────────────────────────────────────────────
+// generation
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -73,7 +73,7 @@ export function tints(hex) {
   return [-30, -15, 15, 30].map(d => hslToHex(h, s, clamp(l + d, 4, 96)));
 }
 
-// ── Color-vision simulation (Machado 2009, severity 1.0) ──────────
+// color-vision simulation (machado 2009, severity 1.0)
 const CVD_MATRICES = {
   protanopia: [[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]],
   deuteranopia: [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.011820, 0.042940, 0.968881]],
@@ -94,7 +94,7 @@ export function simulate(hex, type = 'none') {
   return rgbToHex(fromLinear(out[0]), fromLinear(out[1]), fromLinear(out[2]));
 }
 
-// ── Extract from image (k-means in RGB) ───────────────────────────
+// extract from image (k-means in rgb)
 export function extractPalette(imageData, count = 5) {
   const { data, width, height } = imageData;
   const total = width * height;
@@ -146,7 +146,7 @@ export function extractPalette(imageData, count = 5) {
   return out;
 }
 
-// ── Serialization ─────────────────────────────────────────────────
+// serialization
 export function toHash(palette) {
   return palette.map(h => (normalizeHex(h) || '#000000').slice(1)).join('-');
 }
@@ -163,12 +163,12 @@ export function fromHash(str) {
   return out;
 }
 
-// ── Export formats ────────────────────────────────────────────────
+// export formats
 export const formatHex = p => p.join('\n');
 export const formatCss = p => ':root {\n' + p.map((c, i) => `  --color-${i + 1}: ${c};`).join('\n') + '\n}';
 export const formatJson = p => JSON.stringify(p, null, 2);
 
-// ── Site theme from a palette ─────────────────────────────────────
+// site theme from a palette
 // Maps a whole palette onto the site's 7 theme vars, keeping text readable.
 export function paletteToTheme(colors) {
   const list = (Array.isArray(colors) ? colors : []).map(normalizeHex).filter(Boolean);

@@ -1,22 +1,22 @@
 import { getCwd, getNode } from '../terminal.fs.js';
 
-// ── Log entry formatting ───────────────────────────────────────────
+// log entry formatting
 export function formatLogEntry(e) {
   const header = `[${e.date}] [${e.type}]${e.target ? ' ' + e.target : ''}`;
-  const lines  = [header, e.copy];
+  const lines = [header, e.copy];
   if (e.url) {
     const statusMap = {
-      sent:        '→ signal sent',
-      pending:     '→ signal pending',
+      sent: '→ signal sent',
+      pending: '→ signal pending',
       no_endpoint: '→ signal failed: no endpoint found',
-      failed:      '→ signal failed',
+      failed: '→ signal failed',
     };
     lines.push(statusMap[e.signal_status] ?? '→ signal pending');
   }
   return lines.join('\n');
 }
 
-// ── File resolution ────────────────────────────────────────────────
+// file resolution
 // Returns { node } on success or { error } on failure.
 export const KIND_ERRORS = {
   audio: "binary transmission. use `freq` to play it.",
@@ -39,7 +39,7 @@ export function readProjectLog(node) {
   return node.content.join('\n');
 }
 
-// ── Log fetching ───────────────────────────────────────────────────
+// log fetching
 // Fetches and returns entries sorted newest-first, or null on failure.
 export async function fetchLogEntries(node) {
   const res = await fetch(node.src);

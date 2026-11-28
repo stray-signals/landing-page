@@ -1,5 +1,5 @@
 export default {
-  name:        'clear',
+  name: 'clear',
   description: 'clear the terminal',
-  handler:     () => ({ action: 'clear' }),
+  handler: () => ({ action: 'clear' }),
 };

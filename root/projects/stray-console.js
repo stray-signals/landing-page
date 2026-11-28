@@ -1,4 +1,4 @@
-// ── Stray console runner ───────────────────────────────────────────
+// stray console runner
 // Logs staggered messages to the browser console.
 // Called by each project page's inline module script.
 

@@ -1,23 +1,23 @@
 import { promptEl } from './terminal.render.js';
 
-// ── Input mode state ───────────────────────────────────────────────
-let inputMode   = 'command'; // 'command' | 'wizard'
+// input mode state
+let inputMode = 'command'; // 'command' | 'wizard'
 let savedPrompt = '';
 
 export function getInputMode() { return inputMode; }
 
-// ── Wizard mode (multi-step input) ─────────────────────────────────
-let wizardSteps    = [];
-let wizardIndex    = 0;
-let wizardData     = {};
+// wizard mode (multi-step input)
+let wizardSteps = [];
+let wizardIndex = 0;
+let wizardData = {};
 let wizardOnComplete = null;
 
 export function startWizard(steps, onComplete) {
-  wizardSteps    = steps;
-  wizardIndex    = 0;
-  wizardData     = {};
+  wizardSteps = steps;
+  wizardIndex = 0;
+  wizardData = {};
   wizardOnComplete = onComplete;
-  inputMode   = 'wizard';
+  inputMode = 'wizard';
   savedPrompt = promptEl.textContent;
   promptEl.textContent = steps[0].prompt;
 }
