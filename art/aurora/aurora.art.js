@@ -18,7 +18,9 @@ const WATER = '#050816';
 const SHORE = '#03050e';
 
 const HORIZON = 0.66;      // water line, as a fraction of height
-const MIRROR = HORIZON * 2; // reflections flip around the horizon
+const MIRROR = HORIZON * 2; // the mountains flip around the horizon
+const SQUASH = 0.5;         // the aurora's reflection is squashed toward the horizon
+const SPEED = 0.6;          // 1 = the original pace at 60fps
 const RIDGE_POINTS = 60;
 const STAR_COUNT = 160;
 const BAND_STEP = 3;       // px between aurora columns
@@ -61,7 +63,7 @@ export function mountAurora(container, { mode = 'window' } = {}) {
   let running = !reduceMotion.matches;
   let t = 0, stir = 0;
   let mx = -999, my = -999;
-  let raf = 0, idleTimer = 0;
+  let raf = 0, idleTimer = 0, last = 0;
   const shoot = { a: 0, x: 0, y: 0 };
   const stars = Array.from({ length: STAR_COUNT }, () => ({
     x: Math.random(), y: Math.random() * 0.62,
@@ -93,7 +95,7 @@ export function mountAurora(container, { mode = 'window' } = {}) {
     const bands = PALETTES[palette];
     ctx.globalCompositeOperation = 'lighter';
     // In the water, the pointer stirs the band it is reflecting.
-    const py = reflected ? H * MIRROR - my : my;
+    const py = reflected ? H * HORIZON - (my - H * HORIZON) / SQUASH : my;
     bands.forEach(([r, g, b], band) => {
       for (let i = 0; i < W; i += BAND_STEP) {
         const u = i / W;
@@ -108,7 +110,7 @@ export function mountAurora(container, { mode = 'window' } = {}) {
         ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
         for (let k = 0; k < 4; k++) {
           const hh = h * (1 - k * 0.22);
-          if (reflected) ctx.fillRect(i, H * MIRROR - y0 - hh * 0.2, BAND_STEP, hh * 0.6);
+          if (reflected) ctx.fillRect(i, H * HORIZON + (H * HORIZON - y0 - h) * SQUASH, BAND_STEP, hh * SQUASH);
           else ctx.fillRect(i, y0 - hh + h, BAND_STEP, hh);
         }
       }
@@ -173,28 +175,34 @@ export function mountAurora(container, { mode = 'window' } = {}) {
     ctx.fill();
   }
 
-  function step() {
-    t += 0.016;
-    stir *= 0.97;
-    if (shoot.a <= 0 && Math.random() < 0.004) {
+  // f = elapsed time in 60fps frames, so the pace is the same on any refresh rate
+  function step(f) {
+    t += 0.016 * SPEED * f;
+    stir *= Math.pow(0.97, f);
+    if (shoot.a <= 0 && Math.random() < 0.004 * f) {
       shoot.a = 1;
       shoot.x = Math.random() * W * 0.7 + W * 0.2;
       shoot.y = Math.random() * H * 0.2;
     }
-    if (shoot.a > 0) { shoot.x -= 7; shoot.y += 2.8; shoot.a -= 0.025; }
+    if (shoot.a > 0) { shoot.x -= 7 * f; shoot.y += 2.8 * f; shoot.a -= 0.025 * f; }
   }
 
   function loop() {
-    raf = 0;
+    raf = 0; idleTimer = 0;
     if (!running) return;
-    if (!isOnScreen(canvas)) { idleTimer = setTimeout(loop, 500); return; }
-    step();
+    const now = performance.now();
+    if (!isOnScreen(canvas)) { last = 0; idleTimer = setTimeout(loop, 500); return; }
+    // capped so coming back from a hidden tab doesn't jump ahead
+    const f = last ? Math.min(3, (now - last) / (1000 / 60)) : 1;
+    last = now;
+    step(f);
     draw();
     raf = requestAnimationFrame(loop);
   }
 
   function start() {
     if (raf || idleTimer) { cancelAnimationFrame(raf); clearTimeout(idleTimer); raf = 0; idleTimer = 0; }
+    last = 0;
     if (running) raf = requestAnimationFrame(loop);
   }
 
