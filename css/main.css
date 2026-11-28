@@ -214,6 +214,13 @@ body {
   height: clamp(440px, 66vh, 620px);
 }
 
+#win-aurora {
+  left: clamp(260px, 30vw, 520px);
+  top: max(40px, 7vh);
+  width: clamp(480px, 50vw, 820px);
+  height: clamp(380px, 60vh, 580px);
+}
+
 .app-body { height: 100%; overflow: hidden; color: var(--color-primary); }
 
 /* ── Taskbar ───────────────────────────────────────────────────────── */

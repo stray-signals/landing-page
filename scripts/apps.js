@@ -1,5 +1,6 @@
 // ── App registry ──────────────────────────────────────────────────
 // Apps are windows that also have a full page.
+// folder: which terminal directory lists it (default 'tools').
 
 export const APPS = {
   qr: {
@@ -41,5 +42,14 @@ export const APPS = {
     pageUrl: '/transmissions/',
     description: "read stray's log",
     mount: (bodyEl) => import('/tools/transmissions/transmissions.tool.js').then(m => m.mountTransmissions(bodyEl)),
+  },
+  aurora: {
+    id: 'aurora',
+    folder: 'art',
+    windowId: 'win-aurora',
+    title: 'aurora',
+    pageUrl: '/art/aurora/',
+    description: 'northern lights over a lake',
+    mount: (bodyEl) => import('/art/aurora/aurora.art.js').then(m => m.mountAurora(bodyEl, { mode: 'window' })),
   },
 };

@@ -8,6 +8,14 @@ import { APPS }      from '../scripts/apps.js';
 // listFn    → called at ls time to produce dynamic child list
 // children  → static child nodes keyed by name
 
+function appsIn(folder) {
+  return Object.fromEntries(
+    Object.values(APPS)
+      .filter(a => (a.folder ?? 'tools') === folder)
+      .map(a => [a.id, { type: 'file', kind: 'app', description: a.description, appId: a.id }])
+  );
+}
+
 const filesystem = {
   type: 'dir',
   children: {
@@ -60,12 +68,12 @@ const filesystem = {
     tools: {
       type:        'dir',
       description: 'things you can use',
-      children: Object.fromEntries(
-        Object.values(APPS).map(a => [
-          a.id,
-          { type: 'file', kind: 'app', description: a.description, appId: a.id },
-        ])
-      ),
+      children: appsIn('tools'),
+    },
+    art: {
+      type:        'dir',
+      description: 'things to look at',
+      children: appsIn('art'),
     },
     models:   { type: 'dir', locked: true },
     portals:  { type: 'dir', locked: true },
